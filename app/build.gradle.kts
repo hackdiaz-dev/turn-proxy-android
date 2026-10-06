@@ -358,7 +358,7 @@ val freeturnAarVersion: Provider<String> = providers.gradleProperty("freeturnAar
 val fetchFreeturnAar = tasks.register<FetchFreeturnAar>("fetchFreeturnAar") {
     description = "Качает freeturn.aar и install.sh из релизов free-turn-proxy в app/libs"
     group = "build"
-    repo.set(providers.gradleProperty("freeturnAarRepo").orElse("samosvalishe/free-turn-proxy"))
+    repo.set(providers.gradleProperty("freeturnAarRepo").orElse("hackdiaz-dev/free-turn-proxy"))
     version.set(freeturnAarVersion)
     token.set(providers.environmentVariable("GITHUB_TOKEN"))
     cacheDir.set(layout.dir(provider { File(gradle.gradleUserHomeDir, "caches/freeturn-core") }))
