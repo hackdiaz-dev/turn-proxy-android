@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.3](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.0.2...v5.0.3) (2026-10-06)
+
+
+### Fixes
+
+* update Telegram channel link ([d99767a](https://github.com/hackdiaz-dev/turn-proxy-android/commit/d99767a3d08d1c1d28fe3710e3b7700a0138a395))
+
 ## [5.0.2](https://github.com/samosvalishe/turn-proxy-android/compare/v5.0.1...v5.0.2) (2026-09-24)
 
 
