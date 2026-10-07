@@ -69,11 +69,21 @@
         </activity>
 
         <activity
-            android:name=".service.ProxyShortcutActivity"
+            android:name=".service.ProxyTrampolineActivity"
             android:exported="false"
             android:excludeFromRecents="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- Внешний вход (MacroDroid, Tasker, Shortcut Maker). Имя сохранено ради готовых
+             связок Package+Class. Выключен, пока пользователь не включит
+             "Внешнее управление" в настройках. -->
+        <activity-alias
+            android:name=".service.ProxyShortcutActivity"
+            android:targetActivity=".service.ProxyTrampolineActivity"
+            android:enabled="false"
+            android:exported="true"
+            tools:ignore="ExportedActivity" />
 
         <service
             android:name=".service.ProxyService"

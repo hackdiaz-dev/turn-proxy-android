@@ -56,7 +56,7 @@ class ProxyTileService : TileService(), KoinComponent {
             return
         }
         // START - через activity-трамплин: согласие на VPN спрашивается только оттуда.
-        val intent = ProxyShortcutActivity.startIntent(this)
+        val intent = ProxyTrampolineActivity.startIntent(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startActivityAndCollapse(
                 PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)

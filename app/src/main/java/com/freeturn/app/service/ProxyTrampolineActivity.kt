@@ -20,7 +20,7 @@ import org.koin.android.ext.android.inject
  * START может спросить согласие на VPN - системный диалог поднимается только из activity,
  * а без него в WG-режиме `establish()` вернёт null и сессия умрёт с "откройте приложение".
  */
-class ProxyShortcutActivity : ComponentActivity() {
+class ProxyTrampolineActivity : ComponentActivity() {
 
     private val prefs: AppPreferences by inject()
     private val launcher: ProxyServiceLauncher by inject()
@@ -63,7 +63,7 @@ class ProxyShortcutActivity : ComponentActivity() {
 
     companion object {
         fun startIntent(context: Context): Intent =
-            Intent(context, ProxyShortcutActivity::class.java)
+            Intent(context, ProxyTrampolineActivity::class.java)
                 .setAction(ProxyActions.START)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
