@@ -9,7 +9,7 @@
         <intent
             android:action="com.freeturn.app.START_PROXY"
             android:targetPackage="com.freeturn.app.debug"
-            android:targetClass="com.freeturn.app.service.ProxyShortcutActivity" />
+            android:targetClass="com.freeturn.app.service.ProxyTrampolineActivity" />
     </shortcut>
     <shortcut
         android:shortcutId="stop_proxy"
@@ -20,6 +20,6 @@
         <intent
             android:action="com.freeturn.app.STOP_PROXY"
             android:targetPackage="com.freeturn.app.debug"
-            android:targetClass="com.freeturn.app.service.ProxyShortcutActivity" />
+            android:targetClass="com.freeturn.app.service.ProxyTrampolineActivity" />
     </shortcut>
 </shortcuts>

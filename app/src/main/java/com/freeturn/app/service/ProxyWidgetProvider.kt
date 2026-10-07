@@ -125,7 +125,7 @@ class ProxyWidgetProvider : AppWidgetProvider(), KoinComponent {
                 PendingIntent.getActivity(
                     context,
                     2,
-                    ProxyShortcutActivity.startIntent(context),
+                    ProxyTrampolineActivity.startIntent(context),
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             }
