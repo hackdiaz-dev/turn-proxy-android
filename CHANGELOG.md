@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.0.4](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.0.3...v5.0.4) (2026-10-07)
+
+
+### Fixes
+
+* opt-in external control ([f9aae01](https://github.com/hackdiaz-dev/turn-proxy-android/commit/f9aae019570e52c32dec44e8a41cfba1fcd031a7))
+* opt-in external control for automation apps (MacroDroid, Tasker) ([7b4e6d5](https://github.com/hackdiaz-dev/turn-proxy-android/commit/7b4e6d5b42e3418fc99a200d581fdd4fccd30395))
+
 ## [5.0.3](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.0.2...v5.0.3) (2026-10-06)
 
 
