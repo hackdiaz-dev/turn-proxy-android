@@ -390,6 +390,7 @@
     <string name="hotspot_proxy_desc">Listen on 0.0.0.0:1080 to share the WireGuard tunnel over a hotspot</string>
     <string name="restart_server_on_switch">Restart server on profile switch</string>
     <string name="restart_server_on_switch_desc">Restart the server with the new profile parameters</string>
+    <string name="external_control_hint">Turn on External control in settings, otherwise the shortcut will not work</string>
     <string name="external_control">External control</string>
     <string name="external_control_desc">Let Tasker, MacroDroid and other apps start and stop the proxy. Enable only if you trust your installed apps</string>
     <string name="nerd_section_title">Debug info</string>
