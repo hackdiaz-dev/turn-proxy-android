@@ -398,6 +398,9 @@
     <string name="hotspot_auth_hint">Empty username - no authentication</string>
     <string name="hotspot_udp">UDP over SOCKS5</string>
     <string name="hotspot_udp_desc">UDP ASSOCIATE for QUIC and UDP DNS. Without a username and password, UDP is open to the whole local network</string>
+    <string name="split_tunnel_shared">Shared across all profiles</string>
+    <string name="split_tunnel_shared_desc">One rule set for every profile that has this turned on</string>
+    <string name="split_tunnel_shared_users">Used by %1$d of %2$d profiles. Changes affect all of them</string>
     <string name="external_control">External control</string>
     <string name="external_control_desc">Let Tasker, MacroDroid and other apps start and stop the proxy. Enable only if you trust your installed apps</string>
     <string name="nerd_section_title">Debug info</string>

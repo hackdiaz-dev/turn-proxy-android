@@ -60,7 +60,10 @@ fun SplitTunnelModal(
     onModeChange: (String) -> Unit,
     onAppsChange: (String) -> Unit,
     onDismiss: () -> Unit,
-    containerColor: Color = BottomSheetDefaults.ContainerColor
+    containerColor: Color = BottomSheetDefaults.ContainerColor,
+    shared: Boolean = false,
+    sharedUsage: Pair<Int, Int> = 0 to 0,
+    onSharedChange: ((Boolean) -> Unit)? = null
 ) {
     val sheetState = rememberBottomSheetState(
         initialValue = SheetValue.Hidden,
@@ -77,7 +80,10 @@ fun SplitTunnelModal(
             apps = apps,
             locked = locked,
             onModeChange = onModeChange,
-            onAppsChange = onAppsChange
+            onAppsChange = onAppsChange,
+            shared = shared,
+            sharedUsage = sharedUsage,
+            onSharedChange = onSharedChange
         )
     }
 }
@@ -88,13 +94,16 @@ fun SplitTunnelSheetContent(
     apps: String,
     locked: Boolean,
     onModeChange: (String) -> Unit,
-    onAppsChange: (String) -> Unit
+    onAppsChange: (String) -> Unit,
+    shared: Boolean = false,
+    sharedUsage: Pair<Int, Int> = 0 to 0,
+    onSharedChange: ((Boolean) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val splitOn = mode != SplitTunnelMode.ALL
     val controlsEnabled = splitOn && !locked
     // Последний выбранный "рабочий" режим, чтобы свитч вкл возвращал его, а не дефолт.
-    var modeChoice by remember {
+    var modeChoice by remember(shared) {
         mutableStateOf(if (mode != SplitTunnelMode.ALL) mode else SplitTunnelMode.EXCLUDE)
     }
     var query by remember { mutableStateOf("") }
@@ -138,6 +147,44 @@ fun SplitTunnelSheetContent(
             )
         }
 
+        if (onSharedChange != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = HorizontalPadding),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.split_tunnel_shared),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = if (shared) {
+                            stringResource(
+                                R.string.split_tunnel_shared_users,
+                                sharedUsage.first,
+                                sharedUsage.second
+                            )
+                        } else {
+                            stringResource(R.string.split_tunnel_shared_desc)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = shared,
+                    enabled = !locked,
+                    thumbContent = { SwitchThumbIcon(shared) },
+                    onCheckedChange = { on ->
+                        HapticUtil.perform(context, HapticUtil.Pattern.SELECTION)
+                        onSharedChange(on)
+                    }
+                )
+            }
+        }
         if (locked) {
             InlineNoticeCard(
                 message = stringResource(R.string.split_tunnel_locked),

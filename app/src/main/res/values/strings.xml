@@ -428,6 +428,9 @@
     <string name="hotspot_auth_hint">Пустой логин - без авторизации</string>
     <string name="hotspot_udp">UDP через SOCKS5</string>
     <string name="hotspot_udp_desc">UDP ASSOCIATE для QUIC и UDP-DNS. Без логина и пароля UDP открыт всей локальной сети</string>
+    <string name="split_tunnel_shared">Общие для всех профилей</string>
+    <string name="split_tunnel_shared_desc">Один набор правил для всех профилей, где это включено</string>
+    <string name="split_tunnel_shared_users">Используют %1$d из %2$d профилей. Правки затронут их все</string>
     <string name="external_control">Внешнее управление</string>
     <string name="external_control_desc">Разрешить Tasker, MacroDroid и другим приложениям запускать и останавливать прокси. Включайте, только если доверяете установленным приложениям</string>
     <string name="nerd_section_title">Отладочная информация</string>

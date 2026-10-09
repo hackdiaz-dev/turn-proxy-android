@@ -26,6 +26,8 @@ data class ClientConfig(
      * Пустой в exclude-режиме = дефолтный список рос-сервисов (см. [splitTunnelSelection]).
      */
     val splitTunnelApps: String = "",
+    /** true - правила берутся из общего набора (AppPreferences.splitSharedFlow). */
+    val splitTunnelShared: Boolean = false,
     val logsEnabled: Boolean = true,
     val clientId: String = ""
 ) {

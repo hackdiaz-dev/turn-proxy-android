@@ -198,6 +198,9 @@ fun HomeScreen(
             locked = status.busy,
             onModeChange = serverConfigViewModel::setSplitTunnelMode,
             onAppsChange = serverConfigViewModel::setSplitTunnelApps,
+            shared = clientConfig.splitTunnelShared,
+            sharedUsage = serverConfigViewModel.splitSharedUsage.collectAsStateWithLifecycle(0 to 0).value,
+            onSharedChange = serverConfigViewModel::setSplitShared,
             onDismiss = { showSplitSheet.value = false },
             containerColor = sheetColor
         )

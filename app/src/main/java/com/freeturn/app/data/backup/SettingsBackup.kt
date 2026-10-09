@@ -21,7 +21,9 @@ data class BackupData(
     val autoConnect: Boolean,
     val hotspotProxy: Boolean,
     val suppressUpdatePrompt: Boolean,
-    val suppressTgPrompt: Boolean
+    val suppressTgPrompt: Boolean,
+    val splitSharedMode: String? = null,
+    val splitSharedApps: String = ""
 )
 
 /** Сериализация [BackupData] в JSON (серверы - через тот же [ServerJson], что и в DataStore). */
@@ -42,6 +44,10 @@ object SettingsBackup {
         put("hotspotProxy", data.hotspotProxy)
         put("suppressUpdatePrompt", data.suppressUpdatePrompt)
         put("suppressTgPrompt", data.suppressTgPrompt)
+        data.splitSharedMode?.let {
+            put("splitSharedMode", it)
+            put("splitSharedApps", data.splitSharedApps)
+        }
     }.toString()
 
     fun decode(json: String): BackupData {
@@ -70,7 +76,9 @@ object SettingsBackup {
             autoConnect = o.optBoolean("autoConnect", false),
             hotspotProxy = o.optBoolean("hotspotProxy", false),
             suppressUpdatePrompt = o.optBoolean("suppressUpdatePrompt", false),
-            suppressTgPrompt = o.optBoolean("suppressTgPrompt", false)
+            suppressTgPrompt = o.optBoolean("suppressTgPrompt", false),
+            splitSharedMode = o.optString("splitSharedMode").takeIf { it.isNotBlank() },
+            splitSharedApps = o.optString("splitSharedApps")
         )
     }
 }
