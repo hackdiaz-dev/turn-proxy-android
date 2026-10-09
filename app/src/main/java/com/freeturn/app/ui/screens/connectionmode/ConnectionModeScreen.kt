@@ -310,6 +310,9 @@ fun ConnectionModeScreen(
             locked = status.busy,
             onModeChange = serverConfigViewModel::setSplitTunnelMode,
             onAppsChange = serverConfigViewModel::setSplitTunnelApps,
+            shared = saved.splitTunnelShared,
+            sharedUsage = serverConfigViewModel.splitSharedUsage.collectAsStateWithLifecycle(0 to 0).value,
+            onSharedChange = serverConfigViewModel::setSplitShared,
             onDismiss = { showSplitSheet = false },
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )

@@ -76,6 +76,7 @@ internal object ServerJson {
             put("wireGuardTunnelName", p.client.wireGuardTunnelName)
             put("splitTunnelMode", p.client.splitTunnelMode)
             put("splitTunnelApps", p.client.splitTunnelApps)
+            put("splitTunnelShared", p.client.splitTunnelShared)
             put("logsEnabled", p.client.logsEnabled)
             put("clientId", p.client.clientId)
         })
@@ -142,6 +143,7 @@ internal object ServerJson {
                     if (it in SplitTunnelMode.VALUES) it else SplitTunnelMode.EXCLUDE
                 },
                 splitTunnelApps = cliO.optString("splitTunnelApps"),
+                splitTunnelShared = cliO.optBoolean("splitTunnelShared", false),
                 logsEnabled = cliO.optBoolean("logsEnabled", true),
                 clientId = cliO.optString("clientId")
             ),
