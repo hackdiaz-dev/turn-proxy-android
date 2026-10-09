@@ -15,6 +15,11 @@ abstract class CreateShortcutActivity : Activity() {
     protected abstract val iconRes: Int
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (intent?.action != Intent.ACTION_CREATE_SHORTCUT) {
+            runDirect()
+            finish()
+            return
+        }
         val launch = Intent(proxyAction)
             .setClassName(packageName, ENTRY_CLASS)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -31,6 +36,17 @@ abstract class CreateShortcutActivity : Activity() {
         }
         finish()
     }
+    // Прямой запуск (Shortcut Maker, Activity Launcher): ведёт себя как сам ярлык.
+    private fun runDirect() {
+        if (ExternalControl.isEnabled(this)) {
+            startActivity(
+                Intent(this, ProxyTrampolineActivity::class.java).setAction(proxyAction)
+            )
+        } else {
+            Toast.makeText(this, R.string.external_control_hint, Toast.LENGTH_LONG).show()
+        }
+    }
+
     private companion object {
         const val ENTRY_CLASS = "com.freeturn.app.service.ProxyShortcutActivity"
     }
