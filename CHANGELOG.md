@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.5](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.0.4...v5.0.5) (2026-10-09)
+
+
+### Fixes
+
+* CREATE_SHORTCUT entries for automation apps ([79d6aef](https://github.com/hackdiaz-dev/turn-proxy-android/commit/79d6aefe43ae32e14033b9b7f2cc216e2baed0a6))
+
 ## [5.0.4](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.0.3...v5.0.4) (2026-10-07)
 
 
