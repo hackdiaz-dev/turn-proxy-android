@@ -1,5 +1,6 @@
 package com.freeturn.app.domain.proxy
 
+import com.freeturn.app.data.config.Socks5Config
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -11,6 +12,8 @@ import java.io.EOFException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.ConnectException
+import java.net.DatagramPacket
+import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NoRouteToHostException
@@ -19,6 +22,7 @@ import java.net.Socket
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
@@ -26,14 +30,14 @@ import kotlin.coroutines.coroutineContext
 
 /**
  * SOCKS5 (RFC 1928) для раздачи туннеля наружу - через точку доступа или по локальной
- * сети. Только CONNECT: UDP ASSOCIATE не реализован, поэтому у клиентов нет QUIC и
+ * сети. CONNECT и (по настройке) UDP ASSOCIATE: без него у клиентов нет QUIC и
  * UDP-DNS - им нужен remote DNS через сам прокси.
  *
  * Имеет смысл только в туннельном режиме. Сокеты к цели намеренно НЕ выводятся из
  * VPN - именно они и должны уйти в tun; наружу выводится обратный канал к клиенту
  * ([protect]), иначе ответы в локальную сеть уехали бы в туннель.
  *
- * Слушает 0.0.0.0 без авторизации: открыт всей локальной сети, не только клиентам
+ * Слушает 0.0.0.0, по умолчанию без авторизации: открыт всей локальной сети, не только клиентам
  * точки доступа. Цели на самом телефоне (loopback) закрыты.
  *
  * Одноразовый: после [stop] экземпляр не перезапускается.
@@ -41,8 +45,14 @@ import kotlin.coroutines.coroutineContext
 class Socks5Server(
     private val protect: (Socket) -> Boolean,
     private val log: ProxyLog,
-    private val port: Int = DEFAULT_PORT,
+    private val config: Socks5Config = Socks5Config(),
+    private val protectUdp: (DatagramSocket) -> Boolean = { true },
 ) {
+    private val port = config.port
+    private val modeLabel: String
+        get() = (if (config.udp) "TCP+UDP" else "только TCP") +
+            (if (config.authEnabled) ", с паролем" else ", без пароля")
+
     private val executor = Executors.newCachedThreadPool()
     private val scope = CoroutineScope(executor.asCoroutineDispatcher() + SupervisorJob())
     private val sockets = ConcurrentHashMap.newKeySet<Socket>()
@@ -64,7 +74,7 @@ class Socks5Server(
         }
         serverSocket = socket
         scope.launch { acceptLoop(socket) }
-        log.add("SOCKS5: раздача туннеля на $BIND_ADDRESS:$port (только TCP)")
+        log.add("SOCKS5: раздача туннеля на $BIND_ADDRESS:$port ($modeLabel)")
     }
 
     @Synchronized
@@ -123,7 +133,8 @@ class Socks5Server(
             input.readByte() // RSV
             val addressType = input.readByte()
 
-            if (command != CMD_CONNECT) {
+            val isUdp = command == CMD_UDP_ASSOCIATE && config.udp
+            if (command != CMD_CONNECT && !isUdp) {
                 sendReply(output, REPLY_COMMAND_NOT_SUPPORTED)
                 return@coroutineScope
             }
@@ -131,6 +142,11 @@ class Socks5Server(
             // поэтому соединение после ответа закрывается.
             val host = readHost(input, addressType) ?: run {
                 sendReply(output, REPLY_ADDRESS_TYPE_NOT_SUPPORTED)
+                return@coroutineScope
+            }
+            if (isUdp) {
+                readPort(input)
+                handleUdp(client, input, output)
                 return@coroutineScope
             }
             val address = InetSocketAddress(host, readPort(input))
@@ -167,23 +183,128 @@ class Socks5Server(
         }
     }
 
+    /**
+     * UDP ASSOCIATE (RFC 1928, п. 7). Релей живёт, пока открыто управляющее
+     * TCP-соединение. Датаграммы принимаются только с IP клиента, фрагменты
+     * отбрасываются. Сокет к клиенту выведен из туннеля ([protectUdp]), сокет к
+     * целям - нет: именно он должен уйти в tun.
+     */
+    private suspend fun handleUdp(
+        client: Socket,
+        input: InputStream,
+        output: OutputStream,
+    ) = coroutineScope {
+        val clientIp = client.inetAddress
+        val local = client.localAddress
+        val relay = DatagramSocket(InetSocketAddress(local, 0))
+        val outbound = DatagramSocket()
+        try {
+            if (!protectUdp(relay)) {
+                log.add("SOCKS5: protect UDP отклонён", LogLevel.Warning)
+                sendReply(output, REPLY_GENERAL_FAILURE)
+                return@coroutineScope
+            }
+            val reply = Socks5Udp.header(local, relay.localPort)
+            reply[0] = VERSION.toByte()
+            output.write(reply)
+            output.flush()
+            client.soTimeout = 0
+            val clientPort = AtomicInteger(0)
+            launch { relayUp(relay, outbound, clientIp, clientPort) }
+            launch { relayDown(relay, outbound, clientIp, clientPort) }
+            // Конец управляющего соединения закрывает ассоциацию.
+            while (input.read() != -1) {
+                // данные игнорируются
+            }
+        } finally {
+            relay.close()
+            outbound.close()
+        }
+    }
+
+    private fun relayUp(
+        relay: DatagramSocket,
+        outbound: DatagramSocket,
+        clientIp: InetAddress,
+        clientPort: AtomicInteger,
+    ) {
+        val buf = ByteArray(UDP_BUFFER)
+        val packet = DatagramPacket(buf, buf.size)
+        try {
+            while (true) {
+                packet.length = buf.size
+                relay.receive(packet)
+                if (packet.address != clientIp) continue
+                clientPort.set(packet.port)
+                val head = Socks5Udp.parse(buf, packet.length) ?: continue
+                val ip = try {
+                    InetAddress.getByName(head.host)
+                } catch (_: Exception) {
+                    continue
+                }
+                if (ip.isLoopbackAddress || ip.isAnyLocalAddress) continue
+                val size = packet.length - head.dataOffset
+                outbound.send(DatagramPacket(buf, head.dataOffset, size, ip, head.port))
+            }
+        } catch (_: Exception) {
+            // сокет закрыт - штатный выход
+        }
+    }
+
+    private fun relayDown(
+        relay: DatagramSocket,
+        outbound: DatagramSocket,
+        clientIp: InetAddress,
+        clientPort: AtomicInteger,
+    ) {
+        val buf = ByteArray(UDP_BUFFER)
+        val packet = DatagramPacket(buf, buf.size)
+        try {
+            while (true) {
+                packet.length = buf.size
+                outbound.receive(packet)
+                val port = clientPort.get()
+                if (port == 0) continue
+                val head = Socks5Udp.header(packet.address, packet.port)
+                val out = head + buf.copyOfRange(0, packet.length)
+                relay.send(DatagramPacket(out, out.size, clientIp, port))
+            }
+        } catch (_: Exception) {
+            // сокет закрыт - штатный выход
+        }
+    }
+
     private fun track(socket: Socket) {
         sockets.add(socket)
         if (serverSocket == null) socket.closeQuietly()
     }
 
-    /** false - клиент не предложил "без авторизации" либо поздоровался не по протоколу. */
+    /** false - нет подходящего метода, неверный пароль либо не по протоколу. */
     private fun negotiate(input: InputStream, output: OutputStream): Boolean {
         if (input.readByte() != VERSION) return false
         val methodCount = input.readByte()
         if (methodCount <= 0) return false
         val methods = input.readExactly(methodCount)
-        if (methods.none { it.toInt() and 0xFF == METHOD_NO_AUTH }) {
+        val wanted = if (config.authEnabled) METHOD_USER_PASS else METHOD_NO_AUTH
+        if (methods.none { it.toInt() and 0xFF == wanted }) {
             output.writeBytes(VERSION, METHOD_NONE_ACCEPTABLE)
             return false
         }
-        output.writeBytes(VERSION, METHOD_NO_AUTH)
-        return true
+        output.writeBytes(VERSION, wanted)
+        return !config.authEnabled || authenticate(input, output)
+    }
+
+    /** RFC 1929: VER=1, ULEN, UNAME, PLEN, PASSWD. Сравнение за постоянное время. */
+    private fun authenticate(input: InputStream, output: OutputStream): Boolean {
+        if (input.readByte() != AUTH_VERSION) return false
+        val user = input.readExactly(input.readByte())
+        val pass = input.readExactly(input.readByte())
+        val userOk = MessageDigest.isEqual(user, config.user.toByteArray(Charsets.UTF_8))
+        val passOk = MessageDigest.isEqual(pass, config.pass.toByteArray(Charsets.UTF_8))
+        val ok = userOk and passOk
+        output.writeBytes(AUTH_VERSION, if (ok) 0 else 1)
+        if (!ok) Thread.sleep(AUTH_FAIL_DELAY_MS)
+        return ok
     }
 
     private fun readHost(input: InputStream, addressType: Int): String? = when (addressType) {
@@ -248,8 +369,13 @@ class Socks5Server(
 
         private const val VERSION = 5
         private const val METHOD_NO_AUTH = 0x00
+        private const val METHOD_USER_PASS = 0x02
+        private const val AUTH_VERSION = 1
+        private const val AUTH_FAIL_DELAY_MS = 500L
+        private const val UDP_BUFFER = 65535
         private const val METHOD_NONE_ACCEPTABLE = 0xFF
         private const val CMD_CONNECT = 0x01
+        private const val CMD_UDP_ASSOCIATE = 0x03
         private const val ATYP_IPV4 = 0x01
         private const val ATYP_DOMAIN = 0x03
         private const val ATYP_IPV6 = 0x04
@@ -288,4 +414,52 @@ private fun InputStream.readExactly(count: Int): ByteArray {
 private fun OutputStream.writeBytes(vararg values: Int) {
     write(ByteArray(values.size) { values[it].toByte() })
     flush()
+}
+
+/** Заголовок SOCKS5 UDP (RFC 1928, п. 7): RSV(2) FRAG ATYP ADDR PORT DATA. */
+internal object Socks5Udp {
+    private const val ATYP_IPV4 = 1
+    private const val ATYP_DOMAIN = 3
+    private const val ATYP_IPV6 = 4
+
+    class Header(val host: String, val port: Int, val dataOffset: Int)
+
+    /** null - фрагмент, обрезанный пакет или неизвестный тип адреса. */
+    fun parse(buf: ByteArray, length: Int): Header? {
+        if (length < 4 || buf[2].toInt() != 0) return null
+        var pos = 4
+        val atyp = buf[3].toInt() and 0xFF
+        val host: String = when (atyp) {
+            ATYP_IPV4, ATYP_IPV6 -> {
+                val size = if (atyp == ATYP_IPV4) 4 else 16
+                if (length < pos + size + 2) return null
+                val addr = InetAddress.getByAddress(buf.copyOfRange(pos, pos + size))
+                pos += size
+                addr.hostAddress ?: return null
+            }
+            ATYP_DOMAIN -> {
+                if (length < pos + 1) return null
+                val n = buf[pos].toInt() and 0xFF
+                pos += 1
+                if (n == 0 || length < pos + n + 2) return null
+                val name = String(buf, pos, n, StandardCharsets.US_ASCII)
+                pos += n
+                name
+            }
+            else -> return null
+        }
+        val port = ((buf[pos].toInt() and 0xFF) shl 8) or (buf[pos + 1].toInt() and 0xFF)
+        return Header(host, port, pos + 2)
+    }
+
+    /** Заголовок ответа: 0 0 0 ATYP ADDR PORT (первый байт для TCP-ответа - версия). */
+    fun header(source: InetAddress, port: Int): ByteArray {
+        val addr = source.address
+        val out = ByteArray(6 + addr.size)
+        out[3] = (if (addr.size == 4) ATYP_IPV4 else ATYP_IPV6).toByte()
+        addr.copyInto(out, 4)
+        out[4 + addr.size] = (port shr 8).toByte()
+        out[5 + addr.size] = port.toByte()
+        return out
+    }
 }

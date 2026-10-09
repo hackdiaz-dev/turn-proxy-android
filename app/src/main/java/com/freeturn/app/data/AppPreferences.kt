@@ -1,5 +1,7 @@
 package com.freeturn.app.data
 
+import com.freeturn.app.data.config.Socks5Config
+
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
@@ -53,6 +55,11 @@ class AppPreferences(context: Context) {
         val BATTERY_PROMPT_SHOWN = booleanPreferencesKey("battery_prompt_shown")
         val RESTART_SERVER_ON_SWITCH = booleanPreferencesKey("restart_server_on_switch")
         val HOTSPOT_PROXY = booleanPreferencesKey("hotspot_proxy")
+        val HOTSPOT_PORT =
+            androidx.datastore.preferences.core.intPreferencesKey("hotspot_port")
+        val HOTSPOT_USER = stringPreferencesKey("hotspot_user")
+        val HOTSPOT_PASS = stringPreferencesKey("hotspot_pass")
+        val HOTSPOT_UDP = booleanPreferencesKey("hotspot_udp")
         val SERVERS_JSON = stringPreferencesKey("servers_json")
         val ACTIVE_SERVER_ID = stringPreferencesKey("active_server_id")
         val OWN_CLIENT_ID = stringPreferencesKey("own_client_id")
@@ -165,6 +172,18 @@ class AppPreferences(context: Context) {
     // Раздача туннеля по SOCKS5 наружу. Работает только в WG-режиме: без tun сокеты
     // сервера уходят напрямую, и клиенты хотспота получили бы канал мимо туннеля.
     val hotspotProxyEnabledFlow: Flow<Boolean> = prefFlow { prefs -> prefs[HOTSPOT_PROXY] ?: false }
+
+    val hotspotPortFlow: Flow<Int> = prefFlow { prefs -> prefs[HOTSPOT_PORT] ?: 1080 }
+    val hotspotUserFlow: Flow<String> = prefFlow { prefs -> prefs[HOTSPOT_USER] ?: "" }
+    val hotspotPassFlow: Flow<String> = prefFlow { prefs -> prefs[HOTSPOT_PASS] ?: "" }
+    val hotspotUdpFlow: Flow<Boolean> = prefFlow { prefs -> prefs[HOTSPOT_UDP] ?: false }
+
+    suspend fun hotspotConfig(): Socks5Config = Socks5Config(
+        port = hotspotPortFlow.first(),
+        user = hotspotUserFlow.first(),
+        pass = hotspotPassFlow.first(),
+        udp = hotspotUdpFlow.first(),
+    )
 
     val tgSubscribeShownFlow: Flow<Boolean> = prefFlow { prefs -> prefs[TG_SUBSCRIBE_SHOWN] ?: false }
 
@@ -340,6 +359,21 @@ class AppPreferences(context: Context) {
 
     suspend fun setHotspotProxyEnabled(enabled: Boolean) {
         context.dataStore.edit { it[HOTSPOT_PROXY] = enabled }
+    }
+
+    suspend fun setHotspotPort(port: Int) {
+        context.dataStore.edit { it[HOTSPOT_PORT] = port }
+    }
+
+    suspend fun setHotspotAuth(user: String, pass: String) {
+        context.dataStore.edit {
+            it[HOTSPOT_USER] = user
+            it[HOTSPOT_PASS] = pass
+        }
+    }
+
+    suspend fun setHotspotUdp(enabled: Boolean) {
+        context.dataStore.edit { it[HOTSPOT_UDP] = enabled }
     }
 
     suspend fun setTgSubscribeShown() {

@@ -1,5 +1,7 @@
 package com.freeturn.app.viewmodel.settings
 
+import com.freeturn.app.data.config.Socks5Config
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freeturn.app.data.AppPreferences
@@ -90,6 +92,20 @@ class SettingsViewModel(
     // Применяется со следующего запуска: слушающий порт поднимается вместе с сессией.
     fun setHotspotProxyEnabled(enabled: Boolean) {
         viewModelScope.launch { prefs.setHotspotProxyEnabled(enabled) }
+    }
+
+    suspend fun hotspotConfig(): Socks5Config = prefs.hotspotConfig()
+
+    fun setHotspotPort(port: Int) {
+        viewModelScope.launch { prefs.setHotspotPort(port) }
+    }
+
+    fun setHotspotAuth(user: String, pass: String) {
+        viewModelScope.launch { prefs.setHotspotAuth(user, pass) }
+    }
+
+    fun setHotspotUdp(enabled: Boolean) {
+        viewModelScope.launch { prefs.setHotspotUdp(enabled) }
     }
 
     fun setDynamicTheme(enabled: Boolean) {

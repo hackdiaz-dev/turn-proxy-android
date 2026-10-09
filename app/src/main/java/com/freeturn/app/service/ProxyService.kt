@@ -1,5 +1,7 @@
 package com.freeturn.app.service
 
+import com.freeturn.app.data.config.Socks5Config
+
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -256,7 +258,7 @@ class ProxyService : VpnService() {
             return
         }
         log.add("Сессия $session: запуск принят ядром")
-        if (hotspot) startHotspot(session)
+        if (hotspot) startHotspot(session, prefs.hotspotConfig())
     }
 
     /**
@@ -264,12 +266,17 @@ class ProxyService : VpnService() {
      * заявку, а пока оно поднималось, её могли отменить.
      */
     @Synchronized
-    private fun startHotspot(session: Long) {
+    private fun startHotspot(session: Long, cfg: Socks5Config) {
         if (!isCurrent(session)) return
         // Порт занимает ровно один сервер: потерянный тут экземпляр держал бы 1080 до
         // смерти процесса.
         socks5?.stop()
-        socks5 = Socks5Server(protect = { socket -> protect(socket) }, log = log).also { it.start() }
+        socks5 = Socks5Server(
+            protect = { socket -> protect(socket) },
+            log = log,
+            config = cfg,
+            protectUdp = { socket -> protect(socket) },
+        ).also { it.start() }
     }
 
     /** Исход попытки поднять tun. Судьбу сессии решает вызывающий, а не сама попытка. */

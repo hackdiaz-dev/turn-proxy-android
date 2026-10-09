@@ -168,6 +168,9 @@ fun AdvancedScreen(
                         onCheckedChange = { settingsViewModel.setHotspotProxyEnabled(it) }
                     )
                 }
+                if (hotspotProxyEnabled) {
+                    HotspotOptionsCard(settingsViewModel)
+                }
 
                 SettingsCard {
                     SettingsSwitchRow(

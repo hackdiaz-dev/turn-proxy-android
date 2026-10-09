@@ -417,10 +417,17 @@
     <string name="nerd_mode">Режим отладки</string>
     <string name="nerd_mode_desc">Открывает отладочную информацию: состояние ядра, журнал сервера и подробные логи</string>
     <string name="hotspot_proxy" translatable="false">SOCKS5 Hotspot</string>
-    <string name="hotspot_proxy_desc">Слушать на 0.0.0.0:1080 для раздачи WireGuard-туннеля через точку доступа</string>
+    <string name="hotspot_proxy_desc">Слушать на 0.0.0.0 для раздачи WireGuard-туннеля через точку доступа</string>
     <string name="restart_server_on_switch">Перезапуск сервера при смене профиля</string>
     <string name="restart_server_on_switch_desc">Перезапускать сервер под параметры нового профиля</string>
     <string name="external_control_hint">Включите «Внешнее управление» в настройках, иначе ярлык не сработает</string>
+    <string name="hotspot_port">Порт</string>
+    <string name="hotspot_port_hint">1024-65535, применится при следующем запуске</string>
+    <string name="hotspot_user">Логин</string>
+    <string name="hotspot_pass">Пароль</string>
+    <string name="hotspot_auth_hint">Пустой логин - без авторизации</string>
+    <string name="hotspot_udp">UDP через SOCKS5</string>
+    <string name="hotspot_udp_desc">UDP ASSOCIATE для QUIC и UDP-DNS. Без логина и пароля UDP открыт всей локальной сети</string>
     <string name="external_control">Внешнее управление</string>
     <string name="external_control_desc">Разрешить Tasker, MacroDroid и другим приложениям запускать и останавливать прокси. Включайте, только если доверяете установленным приложениям</string>
     <string name="nerd_section_title">Отладочная информация</string>
