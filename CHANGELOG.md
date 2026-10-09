@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.1.0](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.0.5...v5.1.0) (2026-10-09)
+
+
+### Features
+
+* shared split tunnel rules for all profiles ([0bac47e](https://github.com/hackdiaz-dev/turn-proxy-android/commit/0bac47e978d9668b348388da42a877b9c5d7c51e))
+* SOCKS5 hotspot port, auth and UDP ([b76a386](https://github.com/hackdiaz-dev/turn-proxy-android/commit/b76a3867314748659931e3075c4002c1d418d87c))
+
 ## [5.0.5](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.0.4...v5.0.5) (2026-10-09)
 
 
