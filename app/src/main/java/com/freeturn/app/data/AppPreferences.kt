@@ -155,11 +155,17 @@ class AppPreferences(context: Context) {
     /** Конфиг активного сервера; правила туннелирования общие, если включена галочка. */
     val clientConfigFlow: Flow<ClientConfig> =
         activeServerFlow.combine(splitSharedFlow) { server, shared ->
-            val own = server?.client ?: ClientConfig()
-            if (own.splitTunnelShared && shared != null) {
-                own.copy(splitTunnelMode = shared.mode, splitTunnelApps = shared.apps)
-            } else own
+            (server?.client ?: ClientConfig()).withShared(shared)
         }.distinctUntilChanged()
+
+    private fun ClientConfig.withShared(shared: SplitRules?): ClientConfig =
+        if (splitTunnelShared && shared != null) {
+            copy(splitTunnelMode = shared.mode, splitTunnelApps = shared.apps)
+        } else this
+
+    /** Конфиг переданного сервера с применёнными общими правилами (для запуска туннеля). */
+    suspend fun effectiveClient(server: Server?): ClientConfig =
+        (server?.client ?: ClientConfig()).withShared(splitSharedFlow.first())
 
     /** Сколько профилей используют общие правила и сколько профилей всего. */
     val splitSharedUsageFlow: Flow<Pair<Int, Int>> = serversSnapshot.map { snap ->

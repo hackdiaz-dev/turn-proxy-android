@@ -194,7 +194,7 @@ class ProxyService : VpnService() {
     private suspend fun startSession(session: Long, fresh: Boolean) {
         // Один снимок профиля: раздельные чтения смешали бы peer одного сервера с obf другого.
         val server = prefs.activeServerFlow.first()
-        val cfg = server?.client ?: ClientConfig()
+        val cfg = prefs.effectiveClient(server)
         val opts = server?.opts ?: ServerOpts()
         if (!isCurrent(session)) return
         // Лог рестарта не чистим: строка "Процесс запущен" от App - единственный след того,
