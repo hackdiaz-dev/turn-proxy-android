@@ -85,6 +85,37 @@
             android:exported="true"
             tools:ignore="ExportedActivity" />
 
+        <!-- CREATE_SHORTCUT: автоматизаторы показывают Start/Stop в списке ярлыков. -->
+        <activity
+            android:name=".service.CreateStartShortcutActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:label="@string/shortcut_start_short"
+            android:icon="@drawable/play_arrow_24px"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            tools:ignore="ExportedActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".service.CreateStopShortcutActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:label="@string/shortcut_stop_short"
+            android:icon="@drawable/stop_24px"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            tools:ignore="ExportedActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".service.ProxyService"
             android:exported="false"
