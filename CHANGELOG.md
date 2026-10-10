@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.1.1](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.1.0...v5.1.1) (2026-10-10)
+
+
+### Fixes
+
+* bump core to 4.0.3 ([b606959](https://github.com/hackdiaz-dev/turn-proxy-android/commit/b60695907451f0cf431d4ecf7591a7030e7af108))
+* import sheet keyboard overlap ([a1b8ba3](https://github.com/hackdiaz-dev/turn-proxy-android/commit/a1b8ba328f14caf64be43a3cc08f7bf78c8eac8b))
+
 ## [5.1.0](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.0.5...v5.1.0) (2026-10-09)
 
 
