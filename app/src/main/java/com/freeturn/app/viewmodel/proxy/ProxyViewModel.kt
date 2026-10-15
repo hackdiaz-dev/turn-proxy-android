@@ -1,5 +1,8 @@
 package com.freeturn.app.viewmodel.proxy
 
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+import com.freeturn.app.domain.proxy.TrafficStats
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freeturn.app.data.AppPreferences
@@ -24,6 +27,10 @@ class ProxyViewModel(
 ) : ViewModel() {
 
     val status: StateFlow<ProxyStatus> = store.status
+
+    /** Скорость и трафик подключения; опрос идёт только пока экран виден. */
+    val traffic: StateFlow<TrafficStats> = engine.traffic.observe(store.status)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TrafficStats())
     val logs: StateFlow<List<LogEntry>> = log.lines
 
     fun start() {

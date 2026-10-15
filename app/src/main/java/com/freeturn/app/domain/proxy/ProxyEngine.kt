@@ -70,6 +70,16 @@ class ProxyEngine(
 
     val version: String get() = Mobile.version()
 
+    /** Скорость и трафик текущего подключения. */
+    val traffic = TrafficMeter(counters = { tunnelCounters() })
+
+    /** Счётчики туннеля ядра (rx, tx); null - туннеля нет. Без lock: stop() держит его до конца остановки. */
+    private fun tunnelCounters(): Pair<Long, Long>? = try {
+        Mobile.tunnelStats()?.takeIf { it.up }?.let { it.rxBytes to it.txBytes }
+    } catch (_: Exception) {
+        null
+    }
+
     val isRunning: Boolean get() = running != 0L
 
     /**

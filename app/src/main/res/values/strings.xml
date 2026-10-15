@@ -431,6 +431,8 @@
     <string name="split_tunnel_shared">Общие для всех профилей</string>
     <string name="split_tunnel_shared_desc">Один набор правил для всех профилей, где это включено</string>
     <string name="split_tunnel_shared_users">Используют %1$d из %2$d профилей. Правки затронут их все</string>
+    <string name="traffic_speed">↓ %1$s/с   ↑ %2$s/с</string>
+    <string name="traffic_total">Принято %1$s · Отправлено %2$s</string>
     <string name="external_control">Внешнее управление</string>
     <string name="external_control_desc">Разрешить Tasker, MacroDroid и другим приложениям запускать и останавливать прокси. Включайте, только если доверяете установленным приложениям</string>
     <string name="nerd_section_title">Отладочная информация</string>
