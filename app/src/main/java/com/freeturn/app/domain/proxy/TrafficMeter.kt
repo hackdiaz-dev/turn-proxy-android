@@ -1,6 +1,11 @@
 package com.freeturn.app.domain.proxy
 
 import android.os.SystemClock
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -88,8 +93,24 @@ class TrafficMeter(
             }
         }
 
+    private val scope =
+        CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var shared: StateFlow<TrafficStats>? = null
+
+    /** Один общий источник: экран и уведомление. */
+    @Synchronized
+    fun stats(status: Flow<ProxyStatus>): StateFlow<TrafficStats> =
+        shared ?: observe(status)
+            .stateIn(
+                scope,
+                SharingStarted.WhileSubscribed(SHARE_MS),
+                TrafficStats()
+            )
+            .also { shared = it }
+
     private companion object {
         const val SAMPLE_INTERVAL_MS = 1_000L
+        const val SHARE_MS = 5_000L
         const val MIN_INTERVAL_MS = 300L
         const val MAX_INTERVAL_MS = 2_500L
     }

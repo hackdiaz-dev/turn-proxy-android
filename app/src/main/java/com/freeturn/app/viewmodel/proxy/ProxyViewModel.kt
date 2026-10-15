@@ -5,6 +5,18 @@ import kotlinx.coroutines.flow.SharingStarted
 import com.freeturn.app.domain.proxy.TrafficStats
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.freeturn.app.domain.proxy.PingState
+import com.freeturn.app.domain.proxy.PingResult
+import com.freeturn.app.domain.proxy.PingMeter
 import com.freeturn.app.data.AppPreferences
 import com.freeturn.app.domain.proxy.LogEntry
 import com.freeturn.app.domain.proxy.ProxyEngine
@@ -23,14 +35,55 @@ class ProxyViewModel(
     private val prefs: AppPreferences,
     private val engine: ProxyEngine,
     private val store: ProxyStore,
-    private val log: ProxyLog
+    private val log: ProxyLog,
+    private val pingMeter: PingMeter
 ) : ViewModel() {
 
     val status: StateFlow<ProxyStatus> = store.status
 
     /** Скорость и трафик подключения; опрос идёт только пока экран виден. */
-    val traffic: StateFlow<TrafficStats> = engine.traffic.observe(store.status)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TrafficStats())
+    val traffic: StateFlow<TrafficStats> =
+        engine.traffic.stats(store.status)
+
+    private val pingKick = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    /** Пинг через туннель, пока экран виден и подключение живо. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val ping: StateFlow<PingState> = store.status
+        .map { st ->
+            if (st.tunnelUp && st.phase == ProxyPhase.Connected) {
+                st.connectedSince
+            } else null
+        }
+        .distinctUntilChanged()
+        .flatMapLatest { since ->
+            if (since == null) flowOf(PingState()) else pingLoop()
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            PingState()
+        )
+
+    private fun pingLoop() = flow {
+        var last: Long? = null
+        while (true) {
+            emit(PingState(last, measuring = true))
+            val result = pingMeter.measure()
+            last = (result as? PingResult.Ok)?.ms
+            emit(PingState(last, outside = result is PingResult.Outside))
+            val wait =
+                if (result is PingResult.Ok) PING_OK_MS else PING_RETRY_MS
+            withTimeoutOrNull(wait) { pingKick.first() }
+        }
+    }
+
+    fun refreshPing() {
+        pingKick.tryEmit(Unit)
+    }
     val logs: StateFlow<List<LogEntry>> = log.lines
 
     fun start() {
@@ -74,3 +127,6 @@ class ProxyViewModel(
     /** false - отправлять нечего. */
     suspend fun exportLogs(target: File): Boolean = log.export(target)
 }
+
+private const val PING_OK_MS = 10_000L
+private const val PING_RETRY_MS = 3_000L

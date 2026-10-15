@@ -120,6 +120,7 @@ class ProxyService : VpnService() {
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
         scope.launch { observeStatus() }
+        scope.launch { observeTraffic() }
         scope.launch { observeCoreErrors() }
     }
 
@@ -341,6 +342,10 @@ class ProxyService : VpnService() {
         if (stopping.get() || !engine.isRunning) return
         log.add("Сеть: сменились DNS - обновляем резолверы ядра")
         withCoreDns { session, dns -> engine.setDnsServers(session, dns) }
+    }
+
+    private suspend fun observeTraffic() {
+        engine.traffic.stats(store.status).collect { notifier.updateTraffic(it) }
     }
 
     private fun withCoreDns(apply: (session: Long, dns: String) -> Unit) {

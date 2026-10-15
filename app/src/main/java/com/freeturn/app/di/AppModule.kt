@@ -4,6 +4,7 @@ import com.freeturn.app.data.AppPreferences
 import com.freeturn.app.domain.backup.BackupManager
 import com.freeturn.app.domain.update.AppUpdater
 import com.freeturn.app.domain.share.LinkImportBus
+import com.freeturn.app.domain.proxy.PingMeter
 import com.freeturn.app.domain.proxy.ProxyEngine
 import com.freeturn.app.domain.proxy.ProxyLog
 import com.freeturn.app.domain.proxy.ProxyOrchestrator
@@ -32,6 +33,7 @@ import java.io.File
 val appModule = module {
     single { AppPreferences(androidContext()) }
     single { ProxyStore() }
+    single { PingMeter(androidContext()) }
     single { ProxyLog(File(androidContext().filesDir, "logs")) }
     single<ProxyServiceLauncher> { AndroidProxyServiceLauncher(androidContext(), get(), get()) }
     // Ядро одно на процесс: сессия переживает пересоздание сервиса.

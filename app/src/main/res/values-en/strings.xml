@@ -403,6 +403,11 @@
     <string name="split_tunnel_shared_users">Used by %1$d of %2$d profiles. Changes affect all of them</string>
     <string name="traffic_speed">↓ %1$s/s   ↑ %2$s/s</string>
     <string name="traffic_total">Received %1$s · Sent %2$s</string>
+    <string name="traffic_rate">%1$s/s</string>
+    <string name="ping_value">%1$d ms</string>
+    <string name="ping_none">— ms</string>
+    <string name="ping_cd">Ping, tap to refresh</string>
+    <string name="ping_outside">Ping unavailable: the app is excluded from the tunnel</string>
     <string name="external_control">External control</string>
     <string name="external_control_desc">Let Tasker, MacroDroid and other apps start and stop the proxy. Enable only if you trust your installed apps</string>
     <string name="nerd_section_title">Debug info</string>

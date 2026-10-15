@@ -59,6 +59,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val status by proxyViewModel.status.collectAsStateWithLifecycle()
     val traffic by proxyViewModel.traffic.collectAsStateWithLifecycle()
+    val ping by proxyViewModel.ping.collectAsStateWithLifecycle()
     val uptimeText = rememberProxyUptime(status.connectedSince)
     val clientConfig by serverConfigViewModel.clientConfig.collectAsStateWithLifecycle()
     val updateState by settingsViewModel.updateState.collectAsStateWithLifecycle()
@@ -173,7 +174,12 @@ fun HomeScreen(
                             }
                         }
                     )
-                    TrafficRow(status = status, traffic = traffic)
+                    ConnectionStatsCard(
+                        status = status,
+                        traffic = traffic,
+                        ping = ping,
+                        onPingClick = proxyViewModel::refreshPing
+                    )
                 }
 
                 // Индикатор split-tunneling (только для WG).

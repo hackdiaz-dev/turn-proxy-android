@@ -1,5 +1,9 @@
 package com.freeturn.app.service
 
+import com.freeturn.app.domain.proxy.TrafficStats
+import android.text.format.Formatter
+import android.os.SystemClock
+import android.os.PowerManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -27,6 +31,7 @@ class ProxyNotifier(private val service: Service) {
         private const val NOTIF_ID_CAPTCHA = 2
         private const val CHANNEL_PROXY = "ProxyChannel"
         private const val CHANNEL_CAPTCHA = "CaptchaChannel"
+        private const val TRAFFIC_NOTIFY_MS = 2_000L
 
         /**
          * Каналы заводятся один раз за процесс, из [android.app.Application]. В onCreate
@@ -57,6 +62,8 @@ class ProxyNotifier(private val service: Service) {
     private var shownTunnelMode = false
     private var shownProvider: String? = null
     private var captchaShown = false
+    private var traffic: TrafficStats? = null
+    private var trafficNotifiedAt = 0L
 
     private val openApp: PendingIntent? by lazy {
         service.packageManager.getLaunchIntentForPackage(service.packageName)?.let {
@@ -77,8 +84,10 @@ class ProxyNotifier(private val service: Service) {
     fun build(): Notification =
         build(ProxyStatus(phase = ProxyPhase.Connecting), tunnelMode = false, provider = null)
 
+    @Synchronized
     fun update(status: ProxyStatus, tunnelMode: Boolean, provider: String?) {
         if (status.captchaUrl.isNotEmpty()) showCaptcha() else cancelCaptcha()
+        if (status.phase != ProxyPhase.Connected || !tunnelMode) traffic = null
         val prev = shown
         if (prev != null && tunnelMode == shownTunnelMode && provider == shownProvider &&
             prev.phase == status.phase && prev.active == status.active && prev.total == status.total
@@ -89,6 +98,19 @@ class ProxyNotifier(private val service: Service) {
         shownTunnelMode = tunnelMode
         shownProvider = provider
         notify(NOTIF_ID_FG, build(status, tunnelMode, provider))
+    }
+
+    /** Скорость и трафик в нотификацию: не чаще раза в 2 с и только при включённом экране. */
+    @Synchronized
+    fun updateTraffic(stats: TrafficStats) {
+        val status = shown ?: return
+        if (status.phase != ProxyPhase.Connected || !shownTunnelMode) return
+        val now = SystemClock.elapsedRealtime()
+        if (now - trafficNotifiedAt < TRAFFIC_NOTIFY_MS) return
+        if (service.getSystemService(PowerManager::class.java)?.isInteractive == false) return
+        traffic = stats
+        trafficNotifiedAt = now
+        notify(NOTIF_ID_FG, build(status, shownTunnelMode, shownProvider))
     }
 
     private fun build(status: ProxyStatus, tunnelMode: Boolean, provider: String?): Notification {
@@ -104,15 +126,30 @@ class ProxyNotifier(private val service: Service) {
         val details = listOfNotNull(providerText(provider), streams)
             .joinToString(" · ")
             .ifEmpty { service.getString(R.string.notif_proxy_title) }
-        return NotificationCompat.Builder(service, CHANNEL_PROXY)
+        val stats = traffic?.takeIf { connected && tunnelMode }
+        val speed = stats?.let {
+            service.getString(R.string.traffic_speed, size(it.rxRate), size(it.txRate))
+        }
+        val total = stats?.let {
+            service.getString(R.string.traffic_total, size(it.rxTotal), size(it.txTotal))
+        }
+        val builder = NotificationCompat.Builder(service, CHANNEL_PROXY)
             .setContentTitle(title)
-            .setContentText(details)
+            .setContentText(listOfNotNull(speed, details).joinToString(" · "))
             .setSmallIcon(R.drawable.ic_freeturn)
             .setOngoing(true)
             .setContentIntent(openApp)
             .addAction(0, service.getString(R.string.notif_proxy_stop_action), stopAction)
-            .build()
+        if (speed != null && total != null) {
+            builder.setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(listOf(details, speed, total).joinToString("\n"))
+            )
+        }
+        return builder.build()
     }
+
+    private fun size(bytes: Long): String = Formatter.formatFileSize(service, bytes)
 
     private fun providerText(provider: String?): String? = when (provider) {
         Provider.RELAY -> service.getString(R.string.provider_relay)
