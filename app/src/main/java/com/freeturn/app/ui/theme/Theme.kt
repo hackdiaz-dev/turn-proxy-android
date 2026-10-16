@@ -1,5 +1,7 @@
 package com.freeturn.app.ui.theme
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.ColorScheme
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.LocalActivity
@@ -110,16 +112,18 @@ private val darkScheme = darkColorScheme(
 fun FreeTurnTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    amoled: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val colorScheme = remember(context, darkTheme, dynamicColor) {
-        when {
+    val colorScheme = remember(context, darkTheme, dynamicColor, amoled) {
+        val base = when {
             dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
                 if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
             darkTheme -> darkScheme
             else -> lightScheme
         }
+        if (darkTheme && amoled) base.toAmoled() else base
     }
     val extendedScheme = remember(colorScheme.primary, darkTheme) {
         extendedColorSchemeFor(darkTheme).harmonizedWith(colorScheme.primary)
@@ -130,7 +134,9 @@ fun FreeTurnTheme(
     val window = LocalActivity.current?.window
     if (window != null) {
         SideEffect {
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.isAppearanceLightStatusBars = !darkTheme
+            controller.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 
@@ -155,3 +161,16 @@ fun FreeTurnTheme(
         )
     }
 }
+
+/** Pure black background, near-black surface containers. */
+private fun ColorScheme.toAmoled(): ColorScheme = copy(
+    background = Color.Black,
+    surface = Color.Black,
+    surfaceDim = Color.Black,
+    surfaceContainerLowest = Color.Black,
+    surfaceContainerLow = Color(0xFF121212),
+    surfaceContainer = Color(0xFF161616),
+    surfaceContainerHigh = Color(0xFF1E1E1E),
+    surfaceContainerHighest = Color(0xFF262626),
+    surfaceBright = Color(0xFF2C2C2C),
+)

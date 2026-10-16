@@ -1,5 +1,6 @@
 package com.freeturn.app.data
 
+import com.freeturn.app.data.config.ThemeMode
 import com.freeturn.app.data.config.Socks5Config
 
 import android.content.Context
@@ -63,6 +64,8 @@ class AppPreferences(context: Context) {
         val HOTSPOT_UDP = booleanPreferencesKey("hotspot_udp")
         val SPLIT_SHARED_MODE = stringPreferencesKey("split_shared_mode")
         val SPLIT_SHARED_APPS = stringPreferencesKey("split_shared_apps")
+        val THEME_MODE = stringPreferencesKey("theme_mode")
+        val AMOLED = booleanPreferencesKey("amoled")
         val SERVERS_JSON = stringPreferencesKey("servers_json")
         val ACTIVE_SERVER_ID = stringPreferencesKey("active_server_id")
         val OWN_CLIENT_ID = stringPreferencesKey("own_client_id")
@@ -182,6 +185,12 @@ class AppPreferences(context: Context) {
         activeServerFlow.map { it?.opts ?: ServerOpts() }.distinctUntilChanged()
 
     val dynamicThemeFlow: Flow<Boolean> = prefFlow { prefs -> prefs[DYNAMIC_THEME] ?: true }
+
+    val themeModeFlow: Flow<String> =
+        prefFlow { p -> ThemeMode.normalize(p[THEME_MODE]) }
+
+    val amoledFlow: Flow<Boolean> =
+        prefFlow { p -> p[AMOLED] ?: false }
 
     val nerdModeFlow: Flow<Boolean> = prefFlow { prefs -> prefs[NERD_MODE] ?: true }
 
@@ -358,6 +367,16 @@ class AppPreferences(context: Context) {
         updateActiveServer { it.copy(ssh = it.ssh.copy(rootMode = mode)) }
     }
 
+    suspend fun setThemeMode(mode: String) {
+        context.dataStore.edit {
+            it[THEME_MODE] = ThemeMode.normalize(mode)
+        }
+    }
+
+    suspend fun setAmoled(enabled: Boolean) {
+        context.dataStore.edit { it[AMOLED] = enabled }
+    }
+
     suspend fun setDynamicTheme(enabled: Boolean) {
         context.dataStore.edit { prefs -> prefs[DYNAMIC_THEME] = enabled }
     }
@@ -497,7 +516,9 @@ class AppPreferences(context: Context) {
             suppressUpdatePrompt = suppressUpdatePromptFlow.first(),
             suppressTgPrompt = suppressTgPromptFlow.first(),
             splitSharedMode = splitSharedFlow.first()?.mode,
-            splitSharedApps = splitSharedFlow.first()?.apps.orEmpty()
+            splitSharedApps = splitSharedFlow.first()?.apps.orEmpty(),
+            themeMode = themeModeFlow.first(),
+            amoled = amoledFlow.first()
         )
     }
 
@@ -527,6 +548,8 @@ class AppPreferences(context: Context) {
             prefs[HOTSPOT_PROXY] = data.hotspotProxy
             prefs[SUPPRESS_UPDATE_PROMPT] = data.suppressUpdatePrompt
             prefs[SUPPRESS_TG_PROMPT] = data.suppressTgPrompt
+            prefs[THEME_MODE] = ThemeMode.normalize(data.themeMode)
+            prefs[AMOLED] = data.amoled
             data.splitSharedMode?.let {
                 prefs[SPLIT_SHARED_MODE] = it
                 prefs[SPLIT_SHARED_APPS] = data.splitSharedApps

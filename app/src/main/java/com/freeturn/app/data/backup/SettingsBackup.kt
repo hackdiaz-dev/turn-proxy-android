@@ -1,5 +1,6 @@
 package com.freeturn.app.data.backup
 
+import com.freeturn.app.data.config.ThemeMode
 import com.freeturn.app.data.config.ClientId
 import com.freeturn.app.data.server.Server
 import com.freeturn.app.data.server.ServerJson
@@ -23,7 +24,9 @@ data class BackupData(
     val suppressUpdatePrompt: Boolean,
     val suppressTgPrompt: Boolean,
     val splitSharedMode: String? = null,
-    val splitSharedApps: String = ""
+    val splitSharedApps: String = "",
+    val themeMode: String = ThemeMode.SYSTEM,
+    val amoled: Boolean = false
 )
 
 /** Сериализация [BackupData] в JSON (серверы - через тот же [ServerJson], что и в DataStore). */
@@ -48,6 +51,8 @@ object SettingsBackup {
             put("splitSharedMode", it)
             put("splitSharedApps", data.splitSharedApps)
         }
+        put("themeMode", data.themeMode)
+        put("amoled", data.amoled)
     }.toString()
 
     fun decode(json: String): BackupData {
@@ -78,7 +83,9 @@ object SettingsBackup {
             suppressUpdatePrompt = o.optBoolean("suppressUpdatePrompt", false),
             suppressTgPrompt = o.optBoolean("suppressTgPrompt", false),
             splitSharedMode = o.optString("splitSharedMode").takeIf { it.isNotBlank() },
-            splitSharedApps = o.optString("splitSharedApps")
+            splitSharedApps = o.optString("splitSharedApps"),
+            themeMode = ThemeMode.normalize(o.optString("themeMode")),
+            amoled = o.optBoolean("amoled", false)
         )
     }
 }

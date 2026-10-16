@@ -1,5 +1,6 @@
 package com.freeturn.app.viewmodel.settings
 
+import com.freeturn.app.data.config.ThemeMode
 import com.freeturn.app.data.config.Socks5Config
 
 import androidx.lifecycle.ViewModel
@@ -31,6 +32,9 @@ class SettingsViewModel(
         stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initial)
 
     val dynamicTheme: StateFlow<Boolean> = prefs.dynamicThemeFlow.state(true)
+    val themeMode: StateFlow<String> =
+        prefs.themeModeFlow.state(ThemeMode.SYSTEM)
+    val amoled: StateFlow<Boolean> = prefs.amoledFlow.state(false)
     val nerdMode: StateFlow<Boolean> = prefs.nerdModeFlow.state(true)
     val privacyMode: StateFlow<Boolean> = prefs.privacyModeFlow.state(false)
     val seasonalDecor: StateFlow<Boolean> = prefs.seasonalDecorFlow.state(true)
@@ -106,6 +110,14 @@ class SettingsViewModel(
 
     fun setHotspotUdp(enabled: Boolean) {
         viewModelScope.launch { prefs.setHotspotUdp(enabled) }
+    }
+
+    fun setThemeMode(mode: String) {
+        viewModelScope.launch { prefs.setThemeMode(mode) }
+    }
+
+    fun setAmoled(enabled: Boolean) {
+        viewModelScope.launch { prefs.setAmoled(enabled) }
     }
 
     fun setDynamicTheme(enabled: Boolean) {

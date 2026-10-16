@@ -408,6 +408,12 @@
     <string name="ping_none">— ms</string>
     <string name="ping_cd">Ping, tap to refresh</string>
     <string name="ping_outside">Ping unavailable: the app is excluded from the tunnel</string>
+    <string name="appearance_theme_title">Theme</string>
+    <string name="appearance_theme_system">System</string>
+    <string name="appearance_theme_light">Light</string>
+    <string name="appearance_theme_dark">Dark</string>
+    <string name="appearance_amoled_title">Black background (AMOLED)</string>
+    <string name="appearance_amoled_desc">For OLED screens, in the dark theme</string>
     <string name="external_control">External control</string>
     <string name="external_control_desc">Let Tasker, MacroDroid and other apps start and stop the proxy. Enable only if you trust your installed apps</string>
     <string name="nerd_section_title">Debug info</string>

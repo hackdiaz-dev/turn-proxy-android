@@ -438,6 +438,12 @@
     <string name="ping_none">— мс</string>
     <string name="ping_cd">Пинг, нажмите чтобы обновить</string>
     <string name="ping_outside">Пинг недоступен: приложение исключено из туннеля</string>
+    <string name="appearance_theme_title">Тема</string>
+    <string name="appearance_theme_system">Системная</string>
+    <string name="appearance_theme_light">Светлая</string>
+    <string name="appearance_theme_dark">Тёмная</string>
+    <string name="appearance_amoled_title">Чёрный фон (AMOLED)</string>
+    <string name="appearance_amoled_desc">Для OLED-экранов, в тёмной теме</string>
     <string name="external_control">Внешнее управление</string>
     <string name="external_control_desc">Разрешить Tasker, MacroDroid и другим приложениям запускать и останавливать прокси. Включайте, только если доверяете установленным приложениям</string>
     <string name="nerd_section_title">Отладочная информация</string>
