@@ -1,5 +1,8 @@
 package com.freeturn.app.service
 
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import com.freeturn.app.data.config.Socks5Config
 
 import android.content.BroadcastReceiver
@@ -344,8 +347,14 @@ class ProxyService : VpnService() {
         withCoreDns { session, dns -> engine.setDnsServers(session, dns) }
     }
 
+    // No polling while the screen is off.
+    @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun observeTraffic() {
-        engine.traffic.stats(store.status).collect { notifier.updateTraffic(it) }
+        applicationContext.screenOnFlow()
+            .flatMapLatest { on ->
+                if (on) engine.traffic.stats(store.status) else emptyFlow()
+            }
+            .collect { notifier.updateTraffic(it) }
     }
 
     private fun withCoreDns(apply: (session: Long, dns: String) -> Unit) {

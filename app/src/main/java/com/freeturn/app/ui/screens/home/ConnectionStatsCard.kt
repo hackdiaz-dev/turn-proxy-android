@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -48,15 +47,13 @@ internal fun ConnectionStatsCard(
     traffic: TrafficStats,
     ping: PingState,
     onPingClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val shown = status.tunnelUp && status.phase == ProxyPhase.Connected
     Box(
-        modifier = Modifier
-            .padding(top = Spacing.lg)
-            .fillMaxWidth()
-            .height(CardHeight),
-        contentAlignment = Alignment.TopCenter
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.BottomCenter
     ) {
         if (shown) {
             Surface(
@@ -182,4 +179,4 @@ private fun PingPill(ping: PingState, onClick: () -> Unit) {
     }
 }
 
-private val CardHeight = 104.dp
+internal val StatsCardBottomPadding = 76.dp

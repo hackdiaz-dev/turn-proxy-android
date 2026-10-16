@@ -138,6 +138,7 @@ class ProxyNotifier(private val service: Service) {
             .setContentText(listOfNotNull(speed, details).joinToString(" · "))
             .setSmallIcon(R.drawable.ic_freeturn)
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
             .setContentIntent(openApp)
             .addAction(0, service.getString(R.string.notif_proxy_stop_action), stopAction)
         if (speed != null && total != null) {

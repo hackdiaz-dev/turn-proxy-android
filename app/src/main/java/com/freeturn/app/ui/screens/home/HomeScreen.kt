@@ -174,12 +174,6 @@ fun HomeScreen(
                             }
                         }
                     )
-                    ConnectionStatsCard(
-                        status = status,
-                        traffic = traffic,
-                        ping = ping,
-                        onPingClick = proxyViewModel::refreshPing
-                    )
                 }
 
                 // Индикатор split-tunneling (только для WG).
@@ -195,6 +189,16 @@ fun HomeScreen(
                             .padding(bottom = Spacing.md)
                     )
                 }
+                ConnectionStatsCard(
+                    status = status,
+                    traffic = traffic,
+                    ping = ping,
+                    onPingClick = proxyViewModel::refreshPing,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .widthIn(max = SettingsContentMaxWidth)
+                        .padding(bottom = StatsCardBottomPadding)
+                )
             }
         }
     }
