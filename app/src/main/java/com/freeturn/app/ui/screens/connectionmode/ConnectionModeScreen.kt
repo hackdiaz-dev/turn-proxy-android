@@ -304,13 +304,15 @@ fun ConnectionModeScreen(
     }
 
     if (showSplitSheet && isActive) {
+        val effective by serverConfigViewModel.clientConfig
+            .collectAsStateWithLifecycle()
         SplitTunnelModal(
-            mode = saved.splitTunnelMode,
-            apps = saved.splitTunnelApps,
+            mode = effective.splitTunnelMode,
+            apps = effective.splitTunnelApps,
             locked = status.busy,
             onModeChange = serverConfigViewModel::setSplitTunnelMode,
             onAppsChange = serverConfigViewModel::setSplitTunnelApps,
-            shared = saved.splitTunnelShared,
+            shared = effective.splitTunnelShared,
             sharedUsage = serverConfigViewModel.splitSharedUsage.collectAsStateWithLifecycle(0 to 0).value,
             onSharedChange = serverConfigViewModel::setSplitShared,
             onDismiss = { showSplitSheet = false },
