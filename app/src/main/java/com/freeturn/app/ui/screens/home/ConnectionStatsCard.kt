@@ -179,4 +179,3 @@ private fun PingItem(ping: PingState, onClick: () -> Unit) {
     }
 }
 
-internal val StatsCardBottomPadding = 76.dp

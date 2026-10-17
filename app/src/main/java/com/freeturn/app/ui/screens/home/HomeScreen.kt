@@ -5,6 +5,7 @@
 
 package com.freeturn.app.ui.screens.home
 
+import androidx.compose.foundation.layout.heightIn
 import android.content.Intent
 import android.net.VpnService
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -155,7 +156,7 @@ fun HomeScreen(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = HeroAboveBottomArrangement
                 ) {
                     ConnectionHero(
                         status = status,
@@ -174,31 +175,32 @@ fun HomeScreen(
                             }
                         }
                     )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        ConnectionStatsCard(
+                            status = status,
+                            traffic = traffic,
+                            ping = ping,
+                            onPingClick = proxyViewModel::refreshPing,
+                            modifier = Modifier
+                                .heightIn(min = StatsCardMinHeight)
+                                .padding(top = Spacing.lg)
+                        )
+                        if (clientConfig.wireGuardActive) {
+                            SplitTunnelChip(
+                                splitActive = clientConfig.splitTunnelMode !=
+                                    SplitTunnelMode.ALL,
+                                onClick = {
+                                    HapticUtil.perform(
+                                        context,
+                                        HapticUtil.Pattern.CLICK
+                                    )
+                                    showSplitSheet.value = true
+                                },
+                                modifier = Modifier.padding(bottom = Spacing.md)
+                            )
+                        }
+                    }
                 }
-
-                // Индикатор split-tunneling (только для WG).
-                if (clientConfig.wireGuardActive) {
-                    SplitTunnelChip(
-                        splitActive = clientConfig.splitTunnelMode != SplitTunnelMode.ALL,
-                        onClick = {
-                            HapticUtil.perform(context, HapticUtil.Pattern.CLICK)
-                            showSplitSheet.value = true
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = Spacing.md)
-                    )
-                }
-                ConnectionStatsCard(
-                    status = status,
-                    traffic = traffic,
-                    ping = ping,
-                    onPingClick = proxyViewModel::refreshPing,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .widthIn(max = SettingsContentMaxWidth)
-                        .padding(bottom = StatsCardBottomPadding)
-                )
             }
         }
     }
