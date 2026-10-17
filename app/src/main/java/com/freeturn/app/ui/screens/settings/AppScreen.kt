@@ -157,7 +157,7 @@ fun AppScreen(
             ) {
                 SectionLabel(stringResource(R.string.app_section_interface))
                 SettingsGroup {
-                    SettingsGroupItem(0, 4) {
+                    SettingsGroupItem(0, 6) {
                         SettingsSwitchRow(
                             title = stringResource(R.string.privacy_mode_title),
                             subtitle = stringResource(R.string.privacy_mode_desc),
@@ -166,7 +166,13 @@ fun AppScreen(
                             onCheckedChange = { settingsViewModel.setPrivacyMode(it) }
                         )
                     }
-                    SettingsGroupItem(1, 4) {
+                    SettingsGroupItem(1, 6) {
+                        ThemeModeRow(settingsViewModel)
+                    }
+                    SettingsGroupItem(2, 6) {
+                        AmoledRow(settingsViewModel)
+                    }
+                    SettingsGroupItem(3, 6) {
                         SettingsSwitchRow(
                             title = stringResource(R.string.dynamic_theme_title),
                             subtitle = stringResource(R.string.dynamic_theme_desc),
@@ -175,7 +181,7 @@ fun AppScreen(
                             onCheckedChange = { settingsViewModel.setDynamicTheme(it) }
                         )
                     }
-                    SettingsGroupItem(2, 4) {
+                    SettingsGroupItem(4, 6) {
                         SettingsSwitchRow(
                             title = stringResource(R.string.seasonal_decor_title),
                             subtitle = stringResource(R.string.seasonal_decor_desc),
@@ -184,7 +190,7 @@ fun AppScreen(
                             onCheckedChange = { settingsViewModel.setSeasonalDecor(it) }
                         )
                     }
-                    SettingsGroupItem(3, 4) {
+                    SettingsGroupItem(5, 6) {
                         LanguageRow()
                     }
                 }

@@ -22,38 +22,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freeturn.app.R
 import com.freeturn.app.data.config.ThemeMode
 import com.freeturn.app.ui.components.SettingsEntryRow
-import com.freeturn.app.ui.components.SettingsGroup
-import com.freeturn.app.ui.components.SettingsGroupItem
 import com.freeturn.app.ui.components.SettingsSwitchRow
 import com.freeturn.app.ui.theme.Spacing
 import com.freeturn.app.viewmodel.settings.SettingsViewModel
 
-/** Theme choice (system, light, dark) and the AMOLED black background. */
+/** Row: theme choice (system, light, dark) in a dialog. */
 @Composable
-fun ThemeSettings(vm: SettingsViewModel) {
+fun ThemeModeRow(vm: SettingsViewModel) {
     val mode by vm.themeMode.collectAsStateWithLifecycle()
-    val amoled by vm.amoled.collectAsStateWithLifecycle()
     var dialog by remember { mutableStateOf(false) }
-    SettingsGroup {
-        SettingsGroupItem(index = 0, count = 2) {
-            SettingsEntryRow(
-                iconRes = R.drawable.palette_24px,
-                title = stringResource(R.string.appearance_theme_title),
-                subtitle = stringResource(modeLabel(mode)),
-                onClick = { dialog = true }
-            )
-        }
-        SettingsGroupItem(index = 1, count = 2) {
-            SettingsSwitchRow(
-                title = stringResource(R.string.appearance_amoled_title),
-                subtitle = stringResource(R.string.appearance_amoled_desc),
-                iconRes = R.drawable.mobile_24px,
-                checked = amoled,
-                enabled = mode != ThemeMode.LIGHT,
-                onCheckedChange = vm::setAmoled
-            )
-        }
-    }
+    SettingsEntryRow(
+        iconRes = R.drawable.dark_mode_24px,
+        title = stringResource(R.string.appearance_theme_title),
+        subtitle = stringResource(modeLabel(mode)),
+        onClick = { dialog = true }
+    )
     if (dialog) {
         ThemeDialog(
             current = mode,
@@ -64,6 +47,21 @@ fun ThemeSettings(vm: SettingsViewModel) {
             onDismiss = { dialog = false }
         )
     }
+}
+
+/** Row: AMOLED black background, active in the dark theme. */
+@Composable
+fun AmoledRow(vm: SettingsViewModel) {
+    val mode by vm.themeMode.collectAsStateWithLifecycle()
+    val amoled by vm.amoled.collectAsStateWithLifecycle()
+    SettingsSwitchRow(
+        title = stringResource(R.string.appearance_amoled_title),
+        subtitle = stringResource(R.string.appearance_amoled_desc),
+        iconRes = R.drawable.mobile_24px,
+        checked = amoled,
+        enabled = mode != ThemeMode.LIGHT,
+        onCheckedChange = vm::setAmoled
+    )
 }
 
 @Composable
@@ -89,7 +87,10 @@ private fun ThemeDialog(
                             .padding(vertical = Spacing.sm),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        RadioButton(selected = value == current, onClick = null)
+                        RadioButton(
+                            selected = value == current,
+                            onClick = null
+                        )
                         Text(
                             stringResource(modeLabel(value)),
                             modifier = Modifier.padding(start = Spacing.md)
