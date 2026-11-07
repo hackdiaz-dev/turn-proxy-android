@@ -74,7 +74,7 @@ class ServerControl(
     suspend fun detectRootMode(cfg: SshConfig): String? = withContext(Dispatchers.IO) {
         val result = ssh.executeSilentCommand(
             cfg.ip, cfg.port, cfg.username, cfg.password,
-            "id -u; command -v sudo >/dev/null 2>&1 && { sudo -n true 2>/dev/null && echo FT_SUDO_NOPASS || echo FT_SUDO_PASS; }",
+            bashC("id -u; command -v sudo >/dev/null 2>&1 && { sudo -n true 2>/dev/null && echo FT_SUDO_NOPASS || echo FT_SUDO_PASS; }"),
             knownFingerprint = cfg.hostFingerprint.ifEmpty { null },
             sshKey = if (cfg.authType == SshConfig.AUTH_SSH_KEY) cfg.sshKey else ""
         )
@@ -110,7 +110,7 @@ class ServerControl(
         // Без sudo: /tmp доступен любому, в /opt кладёт уже скрипт под root.
         val r = ssh.executeWithBytes(
             cfg.ip, cfg.port, cfg.username, cfg.password,
-            "f=\$(mktemp /tmp/freeturn-server.XXXXXX) && cat > \"\$f\" && echo \"$UPLOAD_MARK\$f\"",
+            bashC("f=\$(mktemp /tmp/freeturn-server.XXXXXX) && cat > \"\$f\" && echo \"$UPLOAD_MARK\$f\""),
             stdin = bytes,
             knownFingerprint = knownFp,
             sshKey = key,
@@ -134,14 +134,21 @@ class ServerControl(
     private fun uploadFailure(message: String, code: ServerErrorCode): Result<Nothing> =
         Result.failure(ServerCommandException(message, code))
 
-    /** Одинарные кавычки для bash; `'` внутри - стандартный `'\''`. */
-    private fun shellQuote(s: String): String {
-        if (s.isEmpty()) return "''"
-        if (s.matches(Regex("^[A-Za-z0-9._:=\\-/]+$"))) return s
-        return "'" + s.replace("'", "'\\''") + "'"
-    }
-
     companion object {
+        /** Одинарные кавычки для bash; `'` внутри - стандартный `'\''`. */
+        internal fun shellQuote(s: String): String {
+            if (s.isEmpty()) return "''"
+            if (s.matches(Regex("^[A-Za-z0-9._:=\\-/]+$"))) return s
+            return "'" + s.replace("'", "'\\''") + "'"
+        }
+
+        /**
+         * Строку exec-канала разбирает login-shell пользователя, а не bash: fish 3.x не знает
+         * `{ ... }`, csh не знает `&&`. Однострочники отдаём bash явно. В скрипте не должно быть
+         * обратного слэша и одинарной кавычки: в fish внутри одинарных кавычек они читаются иначе.
+         */
+        internal fun bashC(script: String): String = "bash -c " + shellQuote(script)
+
         const val SCRIPT_ASSET = "install.sh"
         private const val EXEC_TIMEOUT_MS = 180_000
         private const val APPLY_TIMEOUT_MS = 900_000
