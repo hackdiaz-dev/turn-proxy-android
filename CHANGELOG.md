@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.3.4](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.3.3...v5.3.4) (2026-11-13)
+
+
+### Fixes
+
+* **core:** bump core to 4.1.5 ([8b80aea](https://github.com/hackdiaz-dev/turn-proxy-android/commit/8b80aea4c10c2b9f74249a28edaa2341cac0d5e1))
+
 ## [5.3.3](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.3.2...v5.3.3) (2026-11-12)
 
 
