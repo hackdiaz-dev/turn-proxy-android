@@ -29,3 +29,5 @@ keystore.properties
 .claude/
 CLAUDE.md
 AGENTS.md
+
+.DS_Store
