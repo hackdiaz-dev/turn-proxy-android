@@ -47,6 +47,8 @@ class Socks5Server(
     private val log: ProxyLog,
     private val config: Socks5Config = Socks5Config(),
     private val protectUdp: (DatagramSocket) -> Boolean = { true },
+    // Раздача через Shizuku слушает только 127.0.0.1: её клиент - helper на этом же телефоне.
+    private val bindAddress: String = BIND_ADDRESS,
 ) {
     private val port = config.port
     private val modeLabel: String
@@ -63,18 +65,21 @@ class Socks5Server(
     // BindException был виден ему, а не утонул в корутине.
     @Volatile private var serverSocket: ServerSocket? = null
 
+    /** Фактический порт после [start] (для port = 0 - выбранный системой), -1 - не слушает. */
+    val boundPort: Int get() = serverSocket?.localPort ?: -1
+
     @Synchronized
     fun start() {
         if (serverSocket != null) return
         val socket = try {
-            ServerSocket(port, BACKLOG, InetAddress.getByName(BIND_ADDRESS))
+            ServerSocket(port, BACKLOG, InetAddress.getByName(bindAddress))
         } catch (e: Exception) {
-            log.add("SOCKS5: не поднялся на $BIND_ADDRESS:$port - ${e.message}", LogLevel.Error)
+            log.add("SOCKS5: не поднялся на $bindAddress:$port - ${e.message}", LogLevel.Error)
             return
         }
         serverSocket = socket
         scope.launch { acceptLoop(socket) }
-        log.add("SOCKS5: раздача туннеля на $BIND_ADDRESS:$port ($modeLabel)")
+        log.add("SOCKS5: раздача туннеля на $bindAddress:$port ($modeLabel)")
     }
 
     @Synchronized

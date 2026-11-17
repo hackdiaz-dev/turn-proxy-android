@@ -42,12 +42,16 @@ android {
 
     packaging {
         resources.excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+        // libtether.so - исполняемый helper раздачи (tether/): его запускает процесс Shizuku,
+        // поэтому он должен лежать файлом в nativeLibraryDir, а не внутри APK.
+        jniLibs.useLegacyPackaging = true
     }
 
     buildFeatures {
         compose = true
         resValues = true
         buildConfig = true
+        aidl = true // ITetherService - сервис раздачи в процессе Shizuku
     }
 
     signingConfigs {
@@ -107,6 +111,8 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.jsch)
     implementation(libs.bouncycastle)
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
 

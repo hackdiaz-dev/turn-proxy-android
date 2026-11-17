@@ -46,6 +46,11 @@ class SettingsViewModel(
     val autoConnect: StateFlow<Boolean> = prefs.autoConnectFlow.state(false)
     val restartServerOnSwitch: StateFlow<Boolean> = prefs.restartServerOnSwitchFlow.state(false)
     val hotspotProxyEnabled: StateFlow<Boolean> = prefs.hotspotProxyEnabledFlow.state(false)
+    val shizukuTetherEnabled: StateFlow<Boolean> = prefs.shizukuTetherEnabledFlow.state(false)
+
+    fun setShizukuTetherEnabled(enabled: Boolean) {
+        viewModelScope.launch { prefs.setShizukuTetherEnabled(enabled) }
+    }
     val suppressUpdatePrompt: StateFlow<Boolean> = prefs.suppressUpdatePromptFlow.state(false)
     val suppressTgPrompt: StateFlow<Boolean> = prefs.suppressTgPromptFlow.state(false)
 

@@ -34,6 +34,7 @@ import com.freeturn.app.domain.proxy.SocketProtector
 import com.freeturn.app.domain.proxy.Socks5Server
 import com.freeturn.app.domain.proxy.TunHandle
 import com.freeturn.app.ui.screens.captcha.AutomaticCaptchaWebViewHostController
+import com.freeturn.app.tether.ShizukuTether
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -65,6 +66,12 @@ class ProxyService : VpnService() {
 
     private var tun: ParcelFileDescriptor? = null
     private var socks5: Socks5Server? = null
+
+    // Раздача точки доступа через Shizuku: внутренний SOCKS5 на 127.0.0.1 для helper'а
+    // и DNS туннеля - для клиентов точки доступа.
+    private var tetherSocks: Socks5Server? = null
+    private var tunnelDns: List<String> = emptyList()
+    @Volatile private var tetherActive = false
 
     // Тексты уведомлений и ошибок сессии берутся из контекста сервиса, не приложения.
     override fun attachBaseContext(newBase: Context) {
@@ -237,9 +244,11 @@ class ProxyService : VpnService() {
         provider = cfg.provider
         // Раздача только поверх туннеля: без tun сокеты сервера ушли бы напрямую.
         val hotspot = tunnelMode && prefs.hotspotProxyEnabledFlow.first()
+        val shizukuTether = tunnelMode && prefs.shizukuTetherEnabledFlow.first()
         if (tunnelMode) {
             // На старте интерфейс обязателен: без него сессии просто нет.
-            when (val tunResult = openTun(cfg, session, hotspot)) {
+            // Обеим раздачам нужно, чтобы само приложение осталось в туннеле: через него идут их сокеты.
+            when (val tunResult = openTun(cfg, session, hotspot || shizukuTether)) {
                 is TunResult.Failed -> {
                     if (!isCurrent(session)) return
                     fail(tunResult.message)
@@ -264,6 +273,50 @@ class ProxyService : VpnService() {
         }
         log.add("Сессия $session: запуск принят ядром")
         if (hotspot) startHotspot(session, prefs.hotspotConfig())
+        if (shizukuTether) startShizukuTether(session)
+    }
+
+    /**
+     * Раздача точки доступа через VPN без root: внутренний SOCKS5 на 127.0.0.1, а Shizuku
+     * направляет в него трафик клиентов точки доступа (см. ShizukuTether). Ошибка раздачи
+     * не роняет VPN - только пишется в журнал.
+     */
+    @Synchronized
+    private fun startShizukuTether(session: Long) {
+        if (!isCurrent(session)) return
+        tetherSocks?.stop()
+        val socks = Socks5Server(
+            protect = { socket -> protect(socket) },
+            log = log,
+            config = Socks5Config(port = 0, udp = true),
+            protectUdp = { socket -> protect(socket) },
+            bindAddress = "127.0.0.1",
+        ).also { it.start() }
+        tetherSocks = socks
+        val port = socks.boundPort
+        if (port <= 0) {
+            log.add("Shizuku: внутренний SOCKS5 не поднялся - раздача не запущена", LogLevel.Error)
+            return
+        }
+        tetherActive = true
+        val dns = tunnelDns.ifEmpty { listOf(FALLBACK_DNS) }
+        scope.launch {
+            val error = ShizukuTether.start(
+                context = applicationContext,
+                proxyPort = port,
+                dnsServers = dns,
+                mtu = ClientConfig.WG_MTU,
+                startHotspot = true,
+                log = { log.add("Shizuku: $it") },
+            )
+            if (error == null) log.add("Shizuku: точка доступа раздаёт VPN")
+            else log.add("Shizuku: раздача не запущена - $error", LogLevel.Error)
+            // Вывод helper'а - в журнал, пока раздача идёт.
+            while (error == null && tetherActive) {
+                delay(TETHER_LOG_POLL_MS)
+                ShizukuTether.drainHelperLog().forEach { log.add("Shizuku helper: $it") }
+            }
+        }
     }
 
     /**
@@ -299,6 +352,7 @@ class ProxyService : VpnService() {
             return TunResult.Failed(getString(R.string.proxy_error_tunnel_config, e.detail()))
         }
 
+        tunnelDns = setup.dns
         val pfd = try {
             Builder().applyTunnel(applicationContext, cfg, setup, hotspot).establish()
         } catch (e: Exception) {
@@ -519,6 +573,15 @@ class ProxyService : VpnService() {
         network.unregister()
         socks5?.stop()
         socks5 = null
+        tetherSocks?.stop()
+        tetherSocks = null
+        if (tetherActive) {
+            tetherActive = false
+            // Не на scope сервиса: он отменяется вместе с ним, а точку доступа надо выключить.
+            CoroutineScope(Dispatchers.IO).launch {
+                ShizukuTether.stop(stopHotspot = true) { log.add("Shizuku: $it") }
+            }
+        }
         closeTun()
     }
 
@@ -547,6 +610,9 @@ class ProxyService : VpnService() {
         // Тот же порог, что у гэп-детектора ядра: сон короче аллокации переживают.
         const val DEEP_SLEEP_KICK_MS = 60_000L
         const val HEARTBEAT_MS = 60_000L
+        // DNS для клиентов раздачи, если в WG-конфиге его нет; запросы всё равно идут через VPN.
+        const val FALLBACK_DNS = "1.1.1.1"
+        const val TETHER_LOG_POLL_MS = 3_000L
     }
 }
 
