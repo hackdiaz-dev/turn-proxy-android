@@ -18,4 +18,7 @@ interface ITetherService {
 
     /** Останавливает раздачу и убирает тестовую сеть. Журнал - как у start. */
     void stop(boolean stopHotspot, out List<String> log) = 2;
+
+    /** Накопленный вывод helper'а (tun2socks) с прошлого вызова - для журнала приложения. */
+    List<String> drainLog() = 3;
 }

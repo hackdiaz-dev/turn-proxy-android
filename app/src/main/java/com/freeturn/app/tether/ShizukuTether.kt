@@ -86,6 +86,11 @@ object ShizukuTether {
         error.takeIf { it.isNotEmpty() }
     }
 
+    /** Новый вывод helper'а (tun2socks) - для журнала приложения. */
+    suspend fun drainHelperLog(): List<String> = withContext(Dispatchers.IO) {
+        runCatching { service?.drainLog() }.getOrNull().orEmpty()
+    }
+
     /** Останавливает раздачу и отпускает сервис Shizuku. */
     suspend fun stop(stopHotspot: Boolean, log: (String) -> Unit) = withContext(Dispatchers.IO) {
         val tether = service ?: return@withContext

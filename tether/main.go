@@ -40,7 +40,8 @@ func main() {
 		Device:   fmt.Sprintf("fd://%d", fd),
 		Proxy:    *proxy,
 		MTU:      *mtu,
-		LogLevel: "warn",
+		// info - видно каждое соединение клиента точки доступа: по журналу ясно, доходит ли трафик.
+		LogLevel: "info",
 	})
 	engine.Start()
 	log.Printf("tether: раздача запущена, fd=%d, %s", fd, *proxy)

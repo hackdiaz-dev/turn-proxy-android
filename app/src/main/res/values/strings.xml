@@ -422,7 +422,7 @@
     <string name="nerd_mode_desc">Открывает отладочную информацию: состояние ядра, журнал сервера и подробные логи</string>
     <string name="hotspot_proxy" translatable="false">SOCKS5 Hotspot</string>
     <string name="shizuku_tether">Раздача через Shizuku</string>
-    <string name="shizuku_tether_desc">Точка доступа раздаёт VPN, без root</string>
+    <string name="shizuku_tether_desc">Точка доступа раздаёт VPN, без root. Требуется Shizuku</string>
     <string name="shizuku_tether_not_running">Запустите Shizuku</string>
     <string name="shizuku_tether_no_permission">Нет доступа к Shizuku</string>
     <string name="shizuku_tether_old_android">Нужен Android 13 или новее</string>

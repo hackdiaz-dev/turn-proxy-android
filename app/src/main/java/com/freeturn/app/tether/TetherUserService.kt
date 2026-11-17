@@ -58,6 +58,18 @@ class TetherUserService() : ITetherService.Stub() {
     private var helperServer: LocalServerSocket? = null
     private var hotspotStartedByUs = false
 
+    // Вывод helper'а для журнала приложения: logcat пользователь не видит.
+    private val helperLog = ArrayDeque<String>()
+
+    override fun drainLog(): List<String> = synchronized(helperLog) {
+        helperLog.toList().also { helperLog.clear() }
+    }
+
+    private fun keepHelperLine(line: String) = synchronized(helperLog) {
+        if (helperLog.size >= HELPER_LOG_MAX) helperLog.removeFirst()
+        helperLog.addLast(line)
+    }
+
     override fun destroy() {
         synchronized(this) { stopLocked(stopHotspot = hotspotStartedByUs, log = mutableListOf()) }
         exitProcess(0)
@@ -98,6 +110,12 @@ class TetherUserService() : ITetherService.Stub() {
             log += "раздача предпочитает тестовые сети"
 
             startHelper(helperPath, proxyUrl, mtu, pfd, log)?.let { return it }
+            // Что система на самом деле приняла для тестовой сети: адрес, маршруты, DNS.
+            cm.getLinkProperties(ready)?.let { lp ->
+                log += "сеть: адреса ${lp.linkAddresses}, маршруты ${lp.routes.map { it.toString() }}, DNS ${lp.dnsServers.map { it.hostAddress }}"
+            }
+            Thread.sleep(500)
+            log += if (helper?.isAlive == true) "helper работает" else "helper упал сразу после запуска"
 
             if (startHotspot) startWifiTethering(tethering, log)?.let { return it }
             ""
@@ -222,7 +240,11 @@ class TetherUserService() : ITetherService.Stub() {
         helper = proc
         // Вывод helper'а - в журнал процесса (logcat), чтобы не терять ошибки tun2socks.
         thread(isDaemon = true, name = "tether-helper-log") {
-            proc.inputStream.bufferedReader().forEachLine { android.util.Log.i("FreeTurnTether", it) }
+            proc.inputStream.bufferedReader().forEachLine {
+                android.util.Log.i("FreeTurnTether", it)
+                keepHelperLine(it)
+            }
+            keepHelperLine("helper завершился, код ${runCatching { proc.exitValue() }.getOrNull()}")
         }
 
         var accepted: LocalSocket? = null
@@ -324,5 +346,6 @@ class TetherUserService() : ITetherService.Stub() {
         const val NETWORK_TIMEOUT_S = 10L
         const val HOTSPOT_TIMEOUT_S = 10L
         const val HELPER_TIMEOUT_MS = 5000L
+        const val HELPER_LOG_MAX = 500
     }
 }

@@ -311,6 +311,11 @@ class ProxyService : VpnService() {
             )
             if (error == null) log.add("Shizuku: точка доступа раздаёт VPN")
             else log.add("Shizuku: раздача не запущена - $error", LogLevel.Error)
+            // Вывод helper'а - в журнал, пока раздача идёт.
+            while (error == null && tetherActive) {
+                delay(TETHER_LOG_POLL_MS)
+                ShizukuTether.drainHelperLog().forEach { log.add("Shizuku helper: $it") }
+            }
         }
     }
 
@@ -607,6 +612,7 @@ class ProxyService : VpnService() {
         const val HEARTBEAT_MS = 60_000L
         // DNS для клиентов раздачи, если в WG-конфиге его нет; запросы всё равно идут через VPN.
         const val FALLBACK_DNS = "1.1.1.1"
+        const val TETHER_LOG_POLL_MS = 3_000L
     }
 }
 
