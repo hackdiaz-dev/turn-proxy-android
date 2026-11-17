@@ -392,7 +392,7 @@
     <string name="nerd_mode">Debug mode</string>
     <string name="nerd_mode_desc">Shows debug info: core state, server journal and verbose logs</string>
     <string name="shizuku_tether">Hotspot via Shizuku</string>
-    <string name="shizuku_tether_desc">Hotspot shares the VPN, no root. Requires Shizuku</string>
+    <string name="shizuku_tether_desc">Hotspot shares the VPN, no root. Requires the Shizuku app</string>
     <string name="shizuku_tether_not_running">Start Shizuku</string>
     <string name="shizuku_tether_no_permission">No Shizuku access</string>
     <string name="shizuku_tether_old_android">Requires Android 13 or newer</string>
