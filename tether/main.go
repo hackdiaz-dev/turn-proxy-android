@@ -37,14 +37,13 @@ func main() {
 	}
 
 	engine.Insert(&engine.Key{
-		Device:   fmt.Sprintf("fd://%d", fd),
-		Proxy:    *proxy,
-		MTU:      *mtu,
-		// info - видно каждое соединение клиента точки доступа: по журналу ясно, доходит ли трафик.
-		LogLevel: "info",
+		Device: fmt.Sprintf("fd://%d", fd),
+		Proxy:  *proxy,
+		MTU:    *mtu,
+		// Только предупреждения и ошибки: info пишет строку на каждое соединение клиента.
+		LogLevel: "warn",
 	})
 	engine.Start()
-	log.Printf("tether: раздача запущена, fd=%d, %s", fd, *proxy)
 
 	// Ждём закрытия сокета сервисом - это сигнал остановки.
 	buf := make([]byte, 1)

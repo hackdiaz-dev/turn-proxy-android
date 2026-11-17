@@ -110,12 +110,8 @@ class TetherUserService() : ITetherService.Stub() {
             log += "раздача предпочитает тестовые сети"
 
             startHelper(helperPath, proxyUrl, mtu, pfd, log)?.let { return it }
-            // Что система на самом деле приняла для тестовой сети: адрес, маршруты, DNS.
-            cm.getLinkProperties(ready)?.let { lp ->
-                log += "сеть: адреса ${lp.linkAddresses}, маршруты ${lp.routes.map { it.toString() }}, DNS ${lp.dnsServers.map { it.hostAddress }}"
-            }
             Thread.sleep(500)
-            log += if (helper?.isAlive == true) "helper работает" else "helper упал сразу после запуска"
+            if (helper?.isAlive != true) return "helper упал сразу после запуска"
 
             if (startHotspot) startWifiTethering(tethering, log)?.let { return it }
             ""
