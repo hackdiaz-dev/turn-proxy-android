@@ -278,9 +278,26 @@ class TetherUserService() : ITetherService.Stub() {
      * принадлежит его uid, а наш процесс работает с uid shell.
      */
     private fun shellContext(): Context {
+        shell?.let { return it }
         val base = appContext ?: error("Shizuku не передал контекст")
-        return base.createPackageContext(SHELL_PACKAGE, 0)
+        val ctx = base.createPackageContext(SHELL_PACKAGE, 0)
+        // createPackageContext оставляет «источник вызова» (AttributionSource, Android 12+)
+        // от пакета приложения - и система отвечает «package ... does not belong to 2000».
+        // Подменяем его на shell с uid этого процесса.
+        var impl: Context = ctx
+        while (impl is android.content.ContextWrapper) impl = impl.baseContext
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val source = android.content.AttributionSource.Builder(android.os.Process.myUid())
+                .setPackageName(SHELL_PACKAGE)
+                .build()
+            impl.javaClass.getDeclaredField("mAttributionSource").apply { isAccessible = true }.set(impl, source)
+        }
+        runCatching { impl.javaClass.getDeclaredField("mOpPackageName").apply { isAccessible = true }.set(impl, SHELL_PACKAGE) }
+        shell = ctx
+        return ctx
     }
+
+    private var shell: Context? = null
 
     private fun linkAddress(cidr: String): LinkAddress =
         LinkAddress::class.java.getConstructor(String::class.java).newInstance(cidr)
