@@ -291,6 +291,9 @@ class ProxyService : VpnService() {
             config = Socks5Config(port = 0, udp = true),
             protectUdp = { socket -> protect(socket) },
             bindAddress = "127.0.0.1",
+            // Весь трафик устройств на точке доступа (браузер, Steam, Syncthing, DNS по UDP)
+            // легко держит больше 64 соединений - лишние сбрасывались, и интернет пропадал.
+            maxClients = TETHER_MAX_CLIENTS,
         ).also { it.start() }
         tetherSocks = socks
         val port = socks.boundPort
@@ -613,6 +616,7 @@ class ProxyService : VpnService() {
         // DNS для клиентов раздачи, если в WG-конфиге его нет; запросы всё равно идут через VPN.
         const val FALLBACK_DNS = "1.1.1.1"
         const val TETHER_LOG_POLL_MS = 3_000L
+        const val TETHER_MAX_CLIENTS = 2048
     }
 }
 
