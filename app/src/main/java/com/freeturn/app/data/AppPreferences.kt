@@ -63,6 +63,7 @@ class AppPreferences(context: Context) {
         val HOTSPOT_USER = stringPreferencesKey("hotspot_user")
         val HOTSPOT_PASS = stringPreferencesKey("hotspot_pass")
         val HOTSPOT_UDP = booleanPreferencesKey("hotspot_udp")
+        val SHIZUKU_TETHER = booleanPreferencesKey("shizuku_tether")
         val SPLIT_SHARED_MODE = stringPreferencesKey("split_shared_mode")
         val SPLIT_SHARED_APPS = stringPreferencesKey("split_shared_apps")
         val THEME_MODE = stringPreferencesKey("theme_mode")
@@ -221,6 +222,9 @@ class AppPreferences(context: Context) {
         pass = hotspotPassFlow.first(),
         udp = hotspotUdpFlow.first(),
     )
+
+    // Раздача точки доступа через VPN без root (Shizuku). Как и SOCKS5, только поверх туннеля.
+    val shizukuTetherEnabledFlow: Flow<Boolean> = prefFlow { prefs -> prefs[SHIZUKU_TETHER] ?: false }
 
     val tgSubscribeShownFlow: Flow<Boolean> = prefFlow { prefs -> prefs[TG_SUBSCRIBE_SHOWN] ?: false }
 
@@ -410,6 +414,10 @@ class AppPreferences(context: Context) {
 
     suspend fun setHotspotProxyEnabled(enabled: Boolean) {
         context.dataStore.edit { it[HOTSPOT_PROXY] = enabled }
+    }
+
+    suspend fun setShizukuTetherEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[SHIZUKU_TETHER] = enabled }
     }
 
     suspend fun setHotspotPort(port: Int) {
