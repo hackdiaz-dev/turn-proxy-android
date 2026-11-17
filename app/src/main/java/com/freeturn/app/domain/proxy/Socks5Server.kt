@@ -49,6 +49,8 @@ class Socks5Server(
     private val protectUdp: (DatagramSocket) -> Boolean = { true },
     // Раздача через Shizuku слушает только 127.0.0.1: её клиент - helper на этом же телефоне.
     private val bindAddress: String = BIND_ADDRESS,
+    // Лишние соединения сверх лимита закрываются сразу.
+    private val maxClients: Int = MAX_CLIENTS,
 ) {
     private val port = config.port
     private val modeLabel: String
@@ -105,7 +107,7 @@ class Socks5Server(
                 }
                 return
             }
-            if (clients.incrementAndGet() > MAX_CLIENTS) {
+            if (clients.incrementAndGet() > maxClients) {
                 clients.decrementAndGet()
                 client.closeQuietly()
                 continue
