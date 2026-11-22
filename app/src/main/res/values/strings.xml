@@ -327,7 +327,7 @@
     <string name="privacy_mode_title">Приватный режим</string>
     <string name="privacy_mode_desc">Скрывает IP и порты</string>
     <string name="seasonal_decor_title">Сезонный декор</string>
-    <string name="seasonal_decor_desc">Листва и свечение вокруг кнопки подключения</string>
+    <string name="seasonal_decor_desc">Эффекты по времени года: зелёные и жёлтые листья, зимой — снежинки</string>
     <string name="language_title">Язык</string>
     <string name="language_system">Как в системе</string>
     <string name="language_ru" translatable="false">Русский</string>

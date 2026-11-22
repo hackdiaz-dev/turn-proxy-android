@@ -66,6 +66,7 @@ fun HomeScreen(
     val updateState by settingsViewModel.updateState.collectAsStateWithLifecycle()
     val suppressUpdatePrompt by settingsViewModel.suppressUpdatePrompt.collectAsStateWithLifecycle()
     val privacyMode by settingsViewModel.privacyMode.collectAsStateWithLifecycle()
+    val season = rememberDecorSeason()
     val seasonalDecor by settingsViewModel.seasonalDecor.collectAsStateWithLifecycle()
     val serversSnapshot by serverConfigViewModel.serversSnapshot.collectAsStateWithLifecycle()
 
@@ -164,6 +165,7 @@ fun HomeScreen(
                         // direct - всегда один поток, счётчик ничего не сообщает.
                         showStreams = clientConfig.provider != Provider.DIRECT,
                         decorEnabled = seasonalDecor,
+                        season = season,
                         onToggle = {
                             // Любая непокоящаяся фаза (включая капчу и старт) - остановка.
                             if (status.busy) {
