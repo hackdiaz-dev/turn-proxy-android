@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.4.0](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.3.4...v5.4.0) (2026-11-22)
+
+
+### Features
+
+* **home:** fix shared split-tunnel rules and add a seasonal decor ([2c146af](https://github.com/hackdiaz-dev/turn-proxy-android/commit/2c146af496ab930b9a01d6f42d1b0b675787c1d0))
+
+
+### Fixes
+
+* **core:** bump core to 4.2.1 ([fc01586](https://github.com/hackdiaz-dev/turn-proxy-android/commit/fc015863f88be2e941a04012bf8c666dc1c391ac))
+
 ## [5.3.4](https://github.com/hackdiaz-dev/turn-proxy-android/compare/v5.3.3...v5.3.4) (2026-11-13)
 
 
