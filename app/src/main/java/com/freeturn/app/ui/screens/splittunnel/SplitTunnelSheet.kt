@@ -103,9 +103,10 @@ fun SplitTunnelSheetContent(
     val splitOn = mode != SplitTunnelMode.ALL
     val controlsEnabled = splitOn && !locked
     // Последний выбранный "рабочий" режим, чтобы свитч вкл возвращал его, а не дефолт.
-    var modeChoice by remember(shared) {
+    var lastEnabledMode by remember(shared) {
         mutableStateOf(if (mode != SplitTunnelMode.ALL) mode else SplitTunnelMode.EXCLUDE)
     }
+    val modeChoice = if (splitOn) mode else lastEnabledMode
     var query by remember { mutableStateOf("") }
     // Пустой exclude-список показывает рос-сервисы отмеченными (тот же дефолт, что и в WG).
     val selected = remember(apps, modeChoice) { splitTunnelSelection(modeChoice, apps) }
@@ -142,6 +143,7 @@ fun SplitTunnelSheetContent(
                 thumbContent = { SwitchThumbIcon(splitOn) },
                 onCheckedChange = { on ->
                     HapticUtil.perform(context, HapticUtil.Pattern.SELECTION)
+                    lastEnabledMode = modeChoice
                     onModeChange(if (on) modeChoice else SplitTunnelMode.ALL)
                 }
             )
@@ -206,7 +208,7 @@ fun SplitTunnelSheetContent(
                 .fillMaxWidth()
                 .padding(horizontal = HorizontalPadding),
             onSelect = { value ->
-                modeChoice = value
+                lastEnabledMode = value
                 onModeChange(value)
             }
         )
