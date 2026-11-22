@@ -302,7 +302,7 @@
     <string name="privacy_mode_title">Privacy mode</string>
     <string name="privacy_mode_desc">Hides IPs and ports</string>
     <string name="seasonal_decor_title">Seasonal decor</string>
-    <string name="seasonal_decor_desc">Leaves and glow around the connect button</string>
+    <string name="seasonal_decor_desc">Seasonal effects: green and yellow leaves, snowflakes in winter</string>
     <string name="language_title">Language</string>
     <string name="language_system">System default</string>
 

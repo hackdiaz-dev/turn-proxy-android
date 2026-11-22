@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.freeturn.app.data.config.DecorSeason
 import com.freeturn.app.R
 import com.freeturn.app.ui.util.HapticUtil
 import kotlinx.coroutines.launch
@@ -46,15 +47,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
 
-/**
- * Сезонное оформление героя: вращение фигуры кнопки пальцем, тёплый ореол и разлёт
- * листвы по нажатию. Флаг про сезон, а не про вкус пользователя: вкус живёт тумблером
- * в настройках, а этим снимается вся тема целиком, когда осень прошла. Форму и палитру
- * кнопки не трогаем: на Material You цвета приходят с обоев, и своя пара выбивалась бы
- * из темы пользователя.
- */
-internal const val AUTUMN_VIBE = true
-
+/** Seasonal particles reuse one short animation; no frames run while idle. */
 private const val LEAF_COUNT = 7
 private const val BURST_MS = 950
 
@@ -66,27 +59,20 @@ private const val SPIN_TICK_MIN_MS = 30L
 private const val SPREAD_FROM_DEG = -170f
 private const val SPREAD_TO_DEG = -10f
 
-private val autumnLeavesLight = listOf(
-    Color(0xFFB4530A),
-    Color(0xFFD97706),
-    Color(0xFF8B3A0F),
-    Color(0xFFC98A12),
-    Color(0xFF9A6212),
-)
-
-private val autumnLeavesDark = listOf(
-    Color(0xFFFFB787),
-    Color(0xFFFFC46B),
-    Color(0xFFE98A4F),
-    Color(0xFFD9A441),
-    Color(0xFFFFD9A0),
-)
-
-// Тема не отдаёт darkTheme наружу, а Material You подменяет всю схему - светлота фона
-// единственный признак, верный и для статичных схем, и для динамических.
 @Composable
-private fun autumnLeafColors(): List<Color> =
-    if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) autumnLeavesDark else autumnLeavesLight
+private fun seasonalColors(season: DecorSeason): List<Color> {
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    return when (season) {
+        DecorSeason.WINTER -> listOf(Color.White)
+        DecorSeason.SPRING, DecorSeason.SUMMER -> if (dark) listOf(Color(0xFF86EFAC), Color(0xFF4ADE80), Color(0xFFA3E635))
+            else listOf(Color(0xFF15803D), Color(0xFF16A34A), Color(0xFF4D7C0F))
+        DecorSeason.AUTUMN -> if (dark) listOf(
+            Color(0xFFFFB787), Color(0xFFFFC46B), Color(0xFFE98A4F), Color(0xFFD9A441), Color(0xFFFFD9A0)
+        ) else listOf(
+            Color(0xFFB4530A), Color(0xFFD97706), Color(0xFF8B3A0F), Color(0xFFC98A12), Color(0xFF9A6212)
+        )
+    }
+}
 
 @Immutable
 private class Leaf(
@@ -124,7 +110,7 @@ private fun leafBatch(seed: Int, colorCount: Int): List<Leaf> {
  * снаружи - анимация контейнера уже посчитана вызывающим.
  */
 @Composable
-internal fun AutumnHeroGlow(
+internal fun SeasonalHeroGlow(
     color: Color,
     strong: Boolean,
     buttonSize: Dp,
@@ -151,17 +137,20 @@ internal fun AutumnHeroGlow(
  * родитель не должен клипать содержимое.
  */
 @Composable
-internal fun AutumnLeafBurst(
+internal fun SeasonalParticleBurst(
     burstKey: Int,
     buttonSize: Dp,
+    season: DecorSeason,
     modifier: Modifier = Modifier
 ) {
-    val colors = autumnLeafColors()
-    val painter = painterResource(R.drawable.eco_24px)
+    val colors = seasonalColors(season)
+    val painter = painterResource(if (season == DecorSeason.WINTER) R.drawable.snowflake_outlined_24px else R.drawable.eco_24px)
     val progress = remember { Animatable(1f) }
     var batch by remember { mutableStateOf(emptyList<Leaf>()) }
 
-    LaunchedEffect(burstKey) {
+    LaunchedEffect(burstKey, season) {
+        progress.snapTo(1f)
+        batch = emptyList()
         if (burstKey == 0) return@LaunchedEffect
         batch = leafBatch(burstKey, colors.size)
         progress.snapTo(0f)

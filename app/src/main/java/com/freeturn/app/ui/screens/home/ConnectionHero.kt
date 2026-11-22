@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.toPath
+import com.freeturn.app.data.config.DecorSeason
 import com.freeturn.app.R
 import com.freeturn.app.ui.theme.LocalReducedMotion
 import com.freeturn.app.ui.theme.extendedColorScheme
@@ -75,12 +76,13 @@ internal fun ConnectionHero(
     uptimeText: String?,
     showStreams: Boolean,
     decorEnabled: Boolean,
+    season: DecorSeason,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val kind = status.phase.heroKind()
     val reducedMotion = LocalReducedMotion.current
-    val decor = AUTUMN_VIBE && decorEnabled
+    val decor = decorEnabled
     // Ноль - ещё не жали: с него разлёт не запускается.
     var burstKey by remember { mutableIntStateOf(0) }
 
@@ -93,6 +95,7 @@ internal fun ConnectionHero(
             tunnelActive = status.tunnelUp,
             reducedMotion = reducedMotion,
             decor = decor,
+            season = season,
             burstKey = burstKey,
             onClick = {
                 if (decor && !reducedMotion) burstKey++
@@ -128,6 +131,7 @@ private fun HeroToggleButton(
     tunnelActive: Boolean,
     reducedMotion: Boolean,
     decor: Boolean,
+    season: DecorSeason,
     burstKey: Int,
     onClick: () -> Unit
 ) {
@@ -192,7 +196,7 @@ private fun HeroToggleButton(
 
     Box(contentAlignment = Alignment.Center) {
         if (decor) {
-            AutumnHeroGlow(
+            SeasonalHeroGlow(
                 color = containerColor,
                 strong = kind == HeroKind.Running,
                 buttonSize = HeroButtonSize
@@ -226,7 +230,7 @@ private fun HeroToggleButton(
         }
 
         if (decor) {
-            AutumnLeafBurst(burstKey = burstKey, buttonSize = HeroButtonSize)
+            SeasonalParticleBurst(burstKey = burstKey, buttonSize = HeroButtonSize, season = season)
         }
     }
 }

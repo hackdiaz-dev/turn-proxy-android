@@ -24,7 +24,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -158,9 +157,7 @@ class AppPreferences(context: Context) {
 
     /** Конфиг активного сервера; правила туннелирования общие, если включена галочка. */
     val clientConfigFlow: Flow<ClientConfig> =
-        activeServerFlow.combine(splitSharedFlow) { server, shared ->
-            (server?.client ?: ClientConfig()).withShared(shared)
-        }.distinctUntilChanged()
+        prefFlow { p -> p.activeSplitClient() }.distinctUntilChanged()
 
     private fun ClientConfig.withShared(shared: SplitRules?): ClientConfig =
         if (splitTunnelShared && shared != null) {
@@ -429,50 +426,12 @@ class AppPreferences(context: Context) {
 
     /** Правка правил: в общий набор, если у активного сервера включена галочка, иначе в его свои. */
     suspend fun setSplitTunnelRule(mode: String? = null, apps: String? = null) {
-        val cfg = clientConfigFlow.first()
-        if (cfg.splitTunnelShared) {
-            context.dataStore.edit { p ->
-                p[SPLIT_SHARED_MODE] = mode ?: cfg.splitTunnelMode
-                p[SPLIT_SHARED_APPS] = apps ?: cfg.splitTunnelApps
-            }
-        } else {
-            updateActiveServer { s ->
-                s.copy(
-                    client = s.client.copy(
-                        splitTunnelMode = mode ?: s.client.splitTunnelMode,
-                        splitTunnelApps = apps ?: s.client.splitTunnelApps
-                    )
-                )
-            }
-        }
+        context.dataStore.edit { it.updateSplitTunnelRule(mode, apps) }
     }
 
-    /**
-     * Включение: общий набор создаётся из правил этого сервера, если его ещё нет.
-     * Выключение: общий набор копируется в собственные правила сервера, остальные не меняются.
-     */
+    /** Общий набор и флаг профиля меняются одним атомарным снимком. */
     suspend fun setSplitShared(enabled: Boolean) {
-        val own = serversSnapshot.first().active?.client ?: return
-        val shared = splitSharedFlow.first()
-        if (enabled) {
-            if (shared == null) {
-                context.dataStore.edit {
-                    it[SPLIT_SHARED_MODE] = own.splitTunnelMode
-                    it[SPLIT_SHARED_APPS] = own.splitTunnelApps
-                }
-            }
-            updateActiveServer { s -> s.copy(client = s.client.copy(splitTunnelShared = true)) }
-        } else {
-            updateActiveServer { s ->
-                s.copy(
-                    client = s.client.copy(
-                        splitTunnelShared = false,
-                        splitTunnelMode = shared?.mode ?: s.client.splitTunnelMode,
-                        splitTunnelApps = shared?.apps ?: s.client.splitTunnelApps
-                    )
-                )
-            }
-        }
+        context.dataStore.edit { it.updateSplitShared(enabled) }
     }
 
     suspend fun setTgSubscribeShown() {
